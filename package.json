@@ -1,0 +1,24 @@
+{
+  "name": "flexstate",
+  "version": "0.0.1",
+  "description": "Flexible, friendly and easy-to-use state machine",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "author": "wxzhang@126.com",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.2",
+    "babel-jest": "^27.0.1",
+    "jest": "^27.0.1"
+  },
+  "dependencies": {
+    "@types/eventemitter2": "^4.1.0",
+    "@types/lodash": "^4.14.185",
+    "eventemitter2": "^6.4.9",
+    "reflect-metadata": "^0.1.13"
+  }
+}
