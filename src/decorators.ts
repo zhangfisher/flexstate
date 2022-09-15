@@ -11,8 +11,8 @@ interface DecoratorOptions {
 /**
  * 用来对装饰函数进行包装
  */ 
-type creatorReturnType = MethodDecorator | TypedPropertyDescriptor<any> | undefined
-type DecoratorCreator<T> =  ((options:T & DecoratorOptions)=>creatorReturnType) | ((target: Object, propertyKey: string | symbol,descriptor:TypedPropertyDescriptor<any>)=>creatorReturnType)
+type creatorReturnType = MethodDecorator | TypedPropertyDescriptor<any> 
+type DecoratorCreateOptions<T> =  (options:T & DecoratorOptions)=>MethodDecorator
 
 interface DecoratorMethodWrapper {
     (method:Function):any;
@@ -36,24 +36,20 @@ interface DecoratorMethodWrapper {
  * })
  * 
  */
-export function createMethodDecorator<T,M>(name:string,defaultParams?:{},wrapper?:DecoratorMethodWrapper): DecoratorCreator<T> {
-export function createMethodDecorator<T>(name:string,defaultParams?:{},wrapper?:DecoratorMethodWrapper): DecoratorCreator<T> {
-    let func: DecoratorCreator<T> = (target: Object, propertyKey?: string | symbol,descriptor?:TypedPropertyDescriptor<any>):creatorReturnType{ 
-        let metadataKey = `decorator:${name}`
-        if(arguments.length==3){// 不带参数
+export function createMethodDecorator<T>(name:string,defaultParams?:{},wrapper?:DecoratorMethodWrapper):DecoratorCreateOptions<T> 
+export function createMethodDecorator<T,M>(name:string,defaultParams?:{},wrapper?:DecoratorMethodWrapper):DecoratorCreateOptions<T> {
+    return (options:DecoratorCreateOptions<T>):MethodDecorator=>{
+        return (target: Object, propertyKey: string | symbol,descriptor:TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>{ 
+            let metadataKey = `decorator:${name}`
             let options = target as (T & DecoratorOptions)
             let finalParams = Object.assign({},defaultParams || {},options)
             if(!finalParams.name) finalParams.name = propertyKey
             Reflect.defineMetadata(metadataKey, finalParams,target as any,propertyKey || '');
             return descriptor
-        }else if(arguments.length==1 && typeof(arguments[0]) == "object"){// 带参数
-            return function(_target: Object, _propertyKey: string | symbol,_descriptor:TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any> | undefined{
-                return _descriptor
-            }
-        }else{
-            return undefined
         }
-    };    
+       
+    }
+    
     return func 
 }
  
