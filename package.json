@@ -19,6 +19,7 @@
     "@types/eventemitter2": "^4.1.0",
     "@types/lodash": "^4.14.185",
     "eventemitter2": "^6.4.9",
+    "nanoid": "3.3.4",
     "reflect-metadata": "^0.1.13"
   }
 }

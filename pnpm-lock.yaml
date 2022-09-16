@@ -8,12 +8,14 @@ specifiers:
   babel-jest: ^27.0.1
   eventemitter2: ^6.4.9
   jest: ^27.0.1
+  nanoid: 3.3.4
   reflect-metadata: ^0.1.13
 
 dependencies:
   '@types/eventemitter2': 4.1.0
   '@types/lodash': 4.14.185
   eventemitter2: 6.4.9
+  nanoid: 3.3.4
   reflect-metadata: 0.1.13
 
 devDependencies:
@@ -3023,6 +3025,12 @@ packages:
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
     dev: true
+
+  /nanoid/3.3.4:
+    resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+    dev: false
 
   /natural-compare/1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
