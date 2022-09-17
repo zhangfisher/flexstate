@@ -2,18 +2,24 @@ import "reflect-metadata";
 import { nanoid }  from "nanoid" 
 
 
+/**
+ * 获取元数据
+ * 
+ * 支持子类
+ * 
+ * @returns 
+ */
 function getOwnMetadata(metadataKey: string, constructor: Object, propertyKey?: string | symbol): any {
-    const constructors = [ constructor, ...getSuperClasses(constructor) ];
+    const constructors = [constructor,...getSuperClasses(constructor) ];
     let result: any[] = [];
     for (let index = 0; index < constructors.length; index++) {
         const c = constructors[constructors.length - index - 1];
         let metadata: any[];
         if (propertyKey) {
-            metadata = Reflect.getOwnMetadata(metadataKey, c, propertyKey);
+            metadata = Reflect.getMetadata(metadataKey, c, propertyKey);
         } else {
-            metadata = Reflect.getOwnMetadata(metadataKey, c);
+            metadata = Reflect.getMetadata(metadataKey, c);
         }
-
         if (metadata) {
             if (Array.isArray(metadata)) {
                 result = [ ...result, ...metadata ];
@@ -51,27 +57,84 @@ export function getPropertyNames(obj: any) {
     return Array.from(new Set<string>(propertyNames));
 }
 
+const excludedPropertyNames = [
+    "constructor","hasOwnProperty","isPrototypeOf","propertyIsEnumerable","prototype",
+    "toString","valueOf","toLocaleString","length"
+]
+
+
+type DecoratorList = {
+    [decoratorName:string]:{
+        [methodName:string]:any[]
+    }
+} 
 /**
  * 获取指定装饰器的方法
  * 
  * getDecorators(<实例>,"装饰器名称")
  * 
- * @param decorator   装饰器名称 
- * @returns 
+ * @param decoratorName   装饰器名称 
+ * @returns {DecoratorList}    {[装饰器名称]:{[方法名称]:[{[装饰器参数],[装饰器参数],...}]}}
  */
-function getDecorators(instance: any,decorator:string):{}  {
-    let results:Record<string,any> = {} ;
+function getDecorators(instance: any,decoratorName?:string,options?:{cache?:boolean}):DecoratorList | {[methodName:string]:object[]}{
+    let opts = Object.assign({
+        cache: true,
+    },options)
+    // 返回缓存中的数据
+    let cache = instance.constructor.__DECORATORS__
+    if(opts?.cache==undefined && cache){
+        if(decoratorName && decoratorName in cache){
+            return cache[decoratorName]
+        }else{
+            return cache as DecoratorList
+        }        
+    }
+    let metadatas:DecoratorList = {} ;
+
     let propertyNames = getPropertyNames(instance)
     propertyNames.forEach(propertyName =>{
-        let metadatas = getOwnMetadata(`decorator:${decorator}`,instance,propertyName)
-        if(metadatas && metadatas.length>0){
-            if(!(propertyName in results)) {
-                results[propertyName] = []
-            }         
-            results[propertyName].push(...metadatas)
+        if(excludedPropertyNames.includes(propertyName) || propertyName.startsWith("__"))  return
+        if(decoratorName){
+            if(!metadatas[decoratorName]) metadatas[decoratorName]={}
+            let metadata =  Reflect.getMetadata(`decorator:${decoratorName}`,instance,propertyName)
+            if(metadata && metadata.length>0){
+                if(!(propertyName in metadatas[decoratorName])) metadatas[decoratorName][propertyName]=[]
+                metadatas[decoratorName][propertyName].push(...metadata)
+            }            
+        }else{
+            let keys = Reflect.getMetadataKeys(instance,propertyName)
+            keys.forEach(key=>{
+                if(key.startsWith("decorator:")){
+                    const decoratorName = key.split(":")[1]
+                    if(!metadatas[decoratorName]) metadatas[decoratorName]={}
+                    let metadata = Reflect.getMetadata(key,instance,propertyName)
+                    if(metadata && metadata.length>0){
+                        if(!(propertyName in metadatas[decoratorName])) metadatas[decoratorName][propertyName]=[]
+                        metadatas[decoratorName][propertyName].push(...metadata)
+                    }
+                }
+            })
         }
+ 
+    })    
+
+    // 如果元数据是一个用来生成代理对象的函数则执行
+    Object.values(metadatas).forEach((methodMetadatas:any) =>{
+        Object.entries(methodMetadatas).forEach(([methodName,metadata])=>{
+            methodMetadatas[methodName]=(metadata as []).map((opts)=>{
+                if(typeof opts == "function"){
+                    return (opts as Function).call(instance,instance)
+                }else{
+                    return opts
+                }
+            })            
+        })
     })
-    return results;
+    if(opts?.cache){
+        instance.constructor.__DECORATORS__ = metadatas
+    }
+
+    return decoratorName ? metadatas[decoratorName] : metadatas
 } 
 /**
  *
@@ -117,10 +180,7 @@ const FLEXSTATE_ACTION_METADATA = "flexstate:action"
  * 函数包装器
  * 用来对原始方法进行包装并返回包装后的方法
  */
-interface DecoratorMethodWrapper<T> {
-    (method:Function,options:T | Function):Function;
-    (method:Function, options:T | Function, target: Object, propertyKey: string | symbol,descriptor:TypedPropertyDescriptor<any>):Function
-};
+type DecoratorMethodWrapper<T> =((method:Function,options:(T & DecoratorBaseOptions) | IDecoratorOptionsProxy<T>)=>Function) | ((method:Function, options:(T & DecoratorBaseOptions) | IDecoratorOptionsProxy<T>, target: Object, propertyKey: string | symbol,descriptor:TypedPropertyDescriptor<any>)=>Function)
 
 
 interface DecoratorBaseOptions {
@@ -137,8 +197,12 @@ interface createMethodDecoratorOptions<T>{
 }
 
 
-interface IDecoratorAccessor{
+
+interface IDecoratorOptionsAccessor{
     getDecoratorOptions(options:{} & DecoratorBaseOptions,methodName:string | symbol,decoratorName:string):{}
+}
+interface IDecoratorOptionsProxy<T>{
+    (instance:Object):T
 }
 
 /**
@@ -146,14 +210,19 @@ interface IDecoratorAccessor{
  * @param options 
  * @returns 
  */
-function createMethodDecoratorOptionsProxy<T>(options:T,methodName:string | symbol,decoratorName:string):Function{
+function createMethodDecoratorOptionsProxy<T>(options:T,methodName:string | symbol,decoratorName:string):IDecoratorOptionsProxy<T>{
     return function(instance:Object){
         return new Proxy(options as any,{
             get(target: object, propKey: string, receiver: any){
-                if("getDecoratorOptions" in instance){ 
-                    return (instance as IDecoratorAccessor)['getDecoratorOptions'].call(instance,options as any,methodName,decoratorName)
+                let proxyOptions = target
+                const DefaultDecoratorOptionsMethod="getDecoratorOptions"
+                const DecoratorOptionsMethod = `get${decoratorName[0].toUpperCase() + decoratorName.substring(1)}DecoratorOptions`
+                if(DecoratorOptionsMethod in instance){
+                    proxyOptions =   (instance as any)[DecoratorOptionsMethod].call(instance,options,methodName)
+                }else if(DefaultDecoratorOptionsMethod in instance){ 
+                    proxyOptions =  (instance as IDecoratorOptionsAccessor)[DefaultDecoratorOptionsMethod].call(instance,options as any,methodName,decoratorName)                                        
                 }
-                return Reflect.get(target, propKey, receiver);
+                return Reflect.get(proxyOptions, propKey, receiver);
             }
         })
     }
@@ -175,28 +244,29 @@ function createMethodDecoratorOptionsProxy<T>(options:T,methodName:string | symb
  export function createMethodDecorator<T extends DecoratorBaseOptions>(name:string,defaultOptions?:T,opts?:createMethodDecoratorOptions<T>): DecoratorCreator<T>{
     type DecoratorOptionsType = T & DecoratorBaseOptions
     return (options?:DecoratorOptionsType):MethodDecorator=>{
-        return function(this:any,target: Object, propertyKey: string | symbol,descriptor:PropertyDescriptor):PropertyDescriptor{ 
-            
+        return function(this:any,target: Object, propertyKey: string | symbol,descriptor:PropertyDescriptor):PropertyDescriptor{             
 
             // 1. 生成默认的装饰器参数
             let finalOptions:DecoratorOptionsType = Object.assign({},defaultOptions || {},options)
             if(!finalOptions.id) finalOptions.id = nanoid()
-            let getOptions
+            
             // 2. 创建代理从当前实现读取装饰器参数
+            let getOptions:null | IDecoratorOptionsProxy<T> = null // 用来从当前实例读取装饰器参数的代理函数
             if(opts?.proxyOptions){
                 getOptions = createMethodDecoratorOptionsProxy<DecoratorOptionsType>(finalOptions,propertyKey,name)                
             }
 
             // 3. 定义元数据, 如果多个装饰器元数据会合并后放在数组中
             let metadataKey = `decorator:${name}`
-            let oldMetadata:(Function | DecoratorOptionsType)[] = Reflect.getMetadata(metadataKey, target as any,propertyKey);
+            let oldMetadata:(IDecoratorOptionsProxy<T> | DecoratorOptionsType)[] = Reflect.getOwnMetadata(metadataKey, (target as any),propertyKey);
             if(!oldMetadata) oldMetadata= []
-            // 是否只允许使用一个装饰器
+
+            // 4.是否只允许使用一个装饰器
             if(oldMetadata.length>0 && opts?.singleton){
                 throw new Error(`Only one decorator<${name}> can be used on the get method<${<string>propertyKey}>`)
             }
             oldMetadata.push(getOptions || finalOptions)
-            Reflect.defineMetadata(metadataKey, oldMetadata,target as any,propertyKey);
+            Reflect.defineMetadata(metadataKey, oldMetadata,(target as any),propertyKey);
 
             // 对被装饰方法函数进行包装
             if(typeof opts?.wrapper=="function"){
@@ -207,92 +277,150 @@ function createMethodDecoratorOptionsProxy<T>(options:T,methodName:string | symb
     }    
 }   
 
+interface LogOptions extends DecoratorBaseOptions{
+    prefix?:string
+}
 
-function logWrapper(method:Function,getOptions:any){
+
+let logWrapper:DecoratorMethodWrapper<LogOptions> = function(method:Function,options:LogOptions):Function{
     return function(this:any,info:string){
-        let options = getOptions(this)
         console.log("before")
         method.call(this,`${options.prefix}${info}`)
         console.log("after")
     }
 }
-interface LogOptionsType extends DecoratorBaseOptions{
-    prefix?:string
-}
 
-const log = createMethodDecorator<LogOptionsType>("interval",{prefix:'[LOG]-'},{wrapper:logWrapper,proxyOptions:true})
+
+const log = createMethodDecorator<LogOptions>("log",{prefix:'[LOG]-'},{wrapper:logWrapper})
 
 interface TimeoutOptionsType extends DecoratorBaseOptions{
     timeout?:number 
 }
 const timeout = createMethodDecorator<TimeoutOptionsType>("timeout",{timeout:5},{proxyOptions:true})
 
-
-
  
 
-class A{
-    constructor(name:string){
+class A  implements IDecoratorOptionsAccessor{ 
+    constructor(){
+        let timeouts = getDecorators(this)
+        console.log(this.constructor.name, " = ",JSON.stringify(timeouts))
+        console.log("--------------------------------")
+    }    
+    getDecoratorOptions(options: DecoratorBaseOptions, methodName: string | symbol, decoratorName: string): {} {
+        if(decoratorName=="timeout"){
+            //(options as TimeoutOptionsType).timeout = 100
+        }else if(decoratorName=="log"){
+            (options as LogOptions).prefix = "[VOERKA]-"
+        }
+        return options
     }
     test1(){
         console.log("test")
     }
+    @timeout()
     test2(){
         console.log("test")
     }
-}
-
-
-class AA extends A{
-    test3(){
-        console.log("test-aa")
-    }
-}
-
-class AAA extends AA{
-    test4(){
-        console.log("test-aaa")
-    }
-}
-
-
-let a1 = new A("a1")
-let aa1 = new AA("aa1")
-let aaa1 = new AAA("aaa1")
-
-
-// console.log(JSON.stringify(Reflect.getMetadata(FLEXSTATE_ACTIONS_METADATA,a1)))
-// console.log(JSON.stringify(Reflect.getMetadata(FLEXSTATE_ACTIONS_METADATA,aa1)))
-
-
-class MyClass implements IDecoratorAccessor{
-    private timeoutOptions:{[key:string | symbol]:any} = {t1:{timeout:10}}
-    constructor(){
-        let timeouts = getDecorators(this,"timeout")
-        console.log("timeouts=",JSON.stringify(timeouts))
-    } 
-    getDecoratorOptions(options: DecoratorBaseOptions, methodName: string | symbol, decoratorName: string): {} {
-        if(options.id=='t1'){
-            (options as TimeoutOptionsType).timeout = 100
-        }
-        return options
-    }
-
     @timeout({id:"t1",timeout:1})
     @timeout({id:"t2",timeout:2})
     @log()
     test(){
 
     } 
-    @log()
+    @log({prefix:"a:"})
     @timeout({timeout:3})
-    pr2(text:string){
+    print(text:string){
         console.log(text)
     }
 }
 
 
+class AA extends A{
+    @log({prefix:"aa:"})
+    test3(){
+        console.log("test-aa")
+    }
+}
+
+class AAA extends AA{
+    @timeout()
+    test4(){
+        console.log("test-aaa")
+    }
+    @log({prefix:"aaa:-----"})
+    print(text:string){
+        console.log(text)
+    }
+}
+
+
+let a1 = new A()
+let aa1 = new AA()
+let aaa1 = new AAA()
+
+a1.print("tom")
+aa1.print("jack")
+aaa1.print("bob")
+
+// console.log(JSON.stringify(Reflect.getMetadata(FLEXSTATE_ACTIONS_METADATA,a1)))
+// console.log(JSON.stringify(Reflect.getMetadata(FLEXSTATE_ACTIONS_METADATA,aa1)))
 
  
-let c1 = new MyClass()
-c1.pr2("hello pr")
+
+ 
+
+// function getDecorators2(instance: any):{}  {
+//     let results:Record<string,any> = {} ;
+//     let propertyNames = getPropertyNames(instance)
+//     propertyNames.forEach(propertyName =>{
+//         if(excludedPropertyNames.includes(propertyName) || propertyName.startsWith("__"))  return
+//         let metadatas = Reflect.getMetadata("B",instance,propertyName)
+//         if(metadatas && metadatas.length>0){
+//             if(!(propertyName in results)) {
+//                 results[propertyName] = []
+//             }         
+//             results[propertyName].push(...metadatas)
+//         }
+//     })
+//     return results;
+// } 
+
+// function cache(value:number){
+//     return function(this:any,target: Object, propertyKey: string | symbol,descriptor:PropertyDescriptor){
+//         let oldMetadatas = Reflect.getOwnMetadata("B",target as any,propertyKey)
+//         if(!oldMetadatas) oldMetadatas= []
+//         oldMetadatas.push(value)
+//         Reflect.defineMetadata("B",oldMetadatas,target as any,propertyKey)
+//         return descriptor
+//     }
+    
+// }
+
+// class B{    
+//     constructor(){         
+//         console.log(JSON.stringify(getDecorators2(this)))
+//     }
+//     @cache(1)
+//     test(){
+
+//     }
+//     // @cache(3)
+//     // log(){}
+// }
+// class BB extends B{
+//     @cache(2)
+//     test(){
+
+//     }
+//     // @cache(3)
+//     // @cache(4)
+//     // test2(){
+
+//     // }
+// }
+
+
+// let b1 = new B()
+// let bb1 = new BB()
+
+
