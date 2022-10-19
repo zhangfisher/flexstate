@@ -85,6 +85,7 @@ export interface FlexStateTransitionHookArguments{
 export interface FlexStateTransitionHook{
     (args:FlexStateTransitionHookArguments):Promise<any> | void
 }
+export type FlexStateNext = string | Array<string> | (()=> Array<string> ) 
 
 /**
  * 状态声明
@@ -100,12 +101,11 @@ export interface FlexState{
     leave?  : FlexStateTransitionHook,                              // 当离开该状态时的钩子
     done?   : FlexStateTransitionHook,			                    // 当已切换至状态后
     resume? : FlexStateTransitionHook,                              // 当离开后再次恢复时调用
-    next?   : string | Array<string> | (()=> Array<string> )        // 定义该状态的下一个状态只能是哪些状态,也可以是返回下一个状态列表的函数,*代表可以转换到任意状态
+    next?   : FlexStateNext                                         // 定义该状态的下一个状态只能是哪些状态,也可以是返回下一个状态列表的函数,*代表可以转换到任意状态
     [key:string]:any                                                // 额外的参数
 } 
 
 export type FinalFlexState = Required<FlexState> & {next:Array<string> | (()=> Array<string> )}
-
 
 // 状态参数，用来传状态参数时允许只传递状态名称或{}
 export type FlexStateArgs = string | number | FlexState   
@@ -1058,7 +1058,7 @@ export class FlexStateMachine extends EventEmitter2{
         }
         // next可以是一个函数，该函数(toState)
         if (fromState && fromState.next) {
-            let nextStates  = fromState.next as unknown as Array<Required<FlexState>>
+            let nextStates  = fromState.next as string[] | (()=>string)
             if(fromState.next==="*"){
                 return true
             }else if(typeof (fromState.next) == "function") {
@@ -1067,11 +1067,12 @@ export class FlexStateMachine extends EventEmitter2{
                 if(!nextStates.includes("ERROR")) nextStates.push("ERROR")            // 任何状态均可以转换至错误状态
             }
             // 如果next中包括*符号代表可以切换到任意状态
-            return ((nextStates.some(s=>s==="*")) || (nextStates.length === 1 && nextStates[0]==="ERROR") ? true : nextStates.includes(toState.name))
+            return ((nextStates.some(s=>s==="*")) || (nextStates.length === 1 && typeof(nextStates[0])=='string' && nextStates[0]==="ERROR") ? true : nextStates.includes(toState.name))
         } else {
             return true
         }
     }
+
     /**
      * 封装状态回调函数，使状态回调函数的执行支持：
      *
