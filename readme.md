@@ -1,4 +1,4 @@
-# AsyncStateMachine
+# FlexState
 
 
 有限状态机是一种用来进行对象行为建模的工具，其作用主要是描述对象在它的生命周期内所经历的状态序列，以及如何响应来自外界的各种事件。
@@ -6,7 +6,7 @@
 - `xstate`太强大了，也太复杂了，学习成本高，我只是要一个简单的状态机而已。
 - `Javascript State Machine`在进行异步切换时存在问题。
 
-因此，就自己实现了`AsyncStateMachine`。`AsyncStateMachine`是一款有限状态机，具有台下特性：
+因此，就自己实现了`FlexState`。`FlexState`是一款有限状态机，具有以下特性：
 
 1. 基于`Class`构建有限状态机实例
 2. 支持定义状态的`enter`和`leave`异步事件
@@ -19,7 +19,7 @@
 # 快速入门
 
 ```javascript
-   const TcpClient = new AsyncStateMachine({        
+   const TcpClient = new FlexState({        
        name        : "tcpclient", // 名称        
        initialState: "Initial",   // 初始状态
        immediate   : false,       // 初始化后立即触发事件，即立即触发initialState

@@ -1,2 +1,4 @@
 /node_modules
 /.yalc
+/yarn.lock
+/yalc.lock
