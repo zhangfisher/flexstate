@@ -185,7 +185,7 @@ export interface FlexStateMachineContext extends FlexStateTransitionHooks{
 /**
  * 状态机构造参数
  */
-export interface FlexStateMachineOptions extends FlexStateTransitionHooks{
+export interface FlexStateOptions extends FlexStateTransitionHooks{
     name               : string,                                     // 当前状态机名称
     states             : Array<FlexState>,                           // 状态声明
     parent?            : FlexState,                                  // 父状态实例
@@ -204,8 +204,8 @@ export class FlexStateMachine extends EventEmitter2{
     static states : FlexStateMap = {  }
     static actions: FlexStateActionMap = {}
     
-    states        : FlexStateMap = {}
-    #options      : Required<FlexStateMachineOptions>                                // 配置参数 
+    states        : Record<string, FinalFlexState>= {}
+    #options      : Required<FlexStateOptions>                                // 配置参数 
     #initialState : FlexState = NULL_STATE                                 // 初始状态
     #finalStates  : Array<string> = []                                     // 保存最终状态名称
     #currentState : FlexState = NULL_STATE                                 // 当前状态
@@ -214,8 +214,8 @@ export class FlexStateMachine extends EventEmitter2{
     #name         : string
     #history      : Array<[number,string]> = []                            // 状态转换历史=[[时间戳,状态名称],[时间戳,状态名称]]
     #actions      : {[name:string]:FlexStateAction} = {}                   // 动作
-
-    constructor(options : FlexStateMachineOptions) {
+    #conflictMethods:Record<string,any> = {}
+    constructor(options : FlexStateOptions) {
         super({
             wildcard    : true,
             delimiter   : "/",
@@ -302,7 +302,7 @@ export class FlexStateMachine extends EventEmitter2{
             this.#initialState = this.states[Object.keys(this.states)[0]]
         }   
         // 自动添加一个错误状态                
-        this.states["ERROR"] = Object.assign({},ERROR_STATE);
+        this.states["ERROR"] = Object.assign({},ERROR_STATE) as FinalFlexState;
         (this as any)["ERROR"] = ERROR_STATE.value
     }
 
@@ -468,7 +468,7 @@ export class FlexStateMachine extends EventEmitter2{
             this._createStateScope(finalState,finalState.scope)
         }
 
-        finalState.createScope = (options:FlexStateMachineOptions)=>this._createStateScope(finalState,options)
+        finalState.createScope = (options:FlexStateOptions)=>this._createStateScope(finalState,options)
 
         // 7. 允许通过states.connected.on("enter",cb)形式订阅该状态的事件
         finalState.on=(event:string,cb:FlexStateTransitionHook)=>this.on(`${stateName}/${event}`,cb)
@@ -486,7 +486,7 @@ export class FlexStateMachine extends EventEmitter2{
      * @param {*} settings 
      * @returns 
      */ 
-    private _createStateScope(state:FlexState,options:FlexStateMachineOptions) {        
+    private _createStateScope(state:FlexState,options:FlexStateOptions) {        
         if(state.scope) throw new StateMachineError("子状态已经定义")
         // 创建子状态机
         state.scope = new FlexStateMachine({
@@ -825,14 +825,14 @@ export class FlexStateMachine extends EventEmitter2{
         this.#actions[action.name] = fn.bind(this.context)
         // 在实现中为该动作生成一个[action.name]的实例方法
         if(this.options.injectActionMethod) {
-            const actionName = (action.alias && action.alias.lenght>0) ? action.alias : action.name
+            const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name
             if(actionName in this.context) {
-                if(!this._conflictMethods) this._conflictMethods=[this.context[actionName]]  // 保存冲突方法的引用以备恢复
-                this._conflictMethods[actionName] = this.context[actionName]
-                logger.warn("异步状态机注入的动作在实例上已经存在同名方法")
+                if(!this.#conflictMethods) this.#conflictMethods=[this.context[actionName]]  // 保存冲突方法的引用以备恢复
+                this.#conflictMethods[actionName] = this.context[actionName]
+                console.warn("异步状态机注入的动作在实例上已经存在同名方法")
             }          
             // 通过触发事件的方式来动作执行 
-            this.context[actionName] = (...args)=>{
+            this.context[actionName] = (...args:any[])=>{
                 return new Promise((resolve, reject)=>{
                     // 为什么要使用setTimout来执行动作?
                     // 因为动作可能会在状态转换过程中被调用，使用setTimeout可以使动作执行从转换调用链中剥离
@@ -853,8 +853,8 @@ export class FlexStateMachine extends EventEmitter2{
      */
     unregister(name: string){
         if(name in this.#actions){            
-            if(this._conflictMethods && (name in this._conflictMethods)){
-                this[name] = this._conflictMethods[name]
+            if(this.#conflictMethods && (name in this.#conflictMethods)){
+                this[name] = this.#conflictMethods[name]
             }   
             delete this.#actions[name]         
             delete this.context[name]
