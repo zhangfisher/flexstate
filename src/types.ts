@@ -20,12 +20,7 @@
  */
 
 
- export interface FlexStateAction{
-    pending?      : string | Function,                			// 开始执行动作前切换到pending状态
-    resolved?     : string | Function,                			// 执行成功后切换到resolved状态
-    rejected?     : string | Function,                			// 执行失败后切换到rejected状态
-    finally?      : string | ((params:Object)=>Array<string>)   // 无论执行成功或失败均切换到finally状态
-} 
+
 
 let action:FlexStateAction = {
     pending:"", resolved:"", rejected:"",finally:"ddd"

@@ -7,14 +7,17 @@ specifiers:
   '@types/lodash': ^4.14.185
   babel-jest: ^27.0.1
   eventemitter2: ^6.4.9
+  flex-decorators: file:.yalc/flex-decorators
   jest: ^27.0.1
   nanoid: 3.3.4
   reflect-metadata: ^0.1.13
+  type-fest: ^2.19.0
 
 dependencies:
   '@types/eventemitter2': 4.1.0
   '@types/lodash': 4.14.185
   eventemitter2: 6.4.9
+  flex-decorators: file:.yalc/flex-decorators
   nanoid: 3.3.4
   reflect-metadata: 0.1.13
 
@@ -23,6 +26,7 @@ devDependencies:
   '@babel/preset-env': 7.19.0_@babel+core@7.19.0
   babel-jest: 27.5.1_@babel+core@7.19.0
   jest: 27.5.1
+  type-fest: 2.19.0
 
 packages:
 
@@ -3481,6 +3485,11 @@ packages:
     resolution: {integrity: sha512-8hmiGIJMDlwjg7dlJ4yKGLK8EsYqKgPWbG3b4wjJddKNwc7N7Dpn08Df4szr/sZdMVeOstrdYSsqzX6BYbcB+w==}
     dev: true
 
+  /throttle-debounce/5.0.0:
+    resolution: {integrity: sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==}
+    engines: {node: '>=12.22'}
+    dev: false
+
   /tmpl/1.0.5:
     resolution: {integrity: sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==}
     dev: true
@@ -3529,6 +3538,11 @@ packages:
   /type-fest/0.21.3:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
+    dev: true
+
+  /type-fest/2.19.0:
+    resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
+    engines: {node: '>=12.20'}
     dev: true
 
   /typedarray-to-buffer/3.1.5:
@@ -3722,3 +3736,12 @@ packages:
       y18n: 5.0.8
       yargs-parser: 20.2.9
     dev: true
+
+  file:.yalc/flex-decorators:
+    resolution: {directory: .yalc/flex-decorators, type: directory}
+    name: flex-decorators
+    version: 1.0.1
+    dependencies:
+      reflect-metadata: 0.1.13
+      throttle-debounce: 5.0.0
+    dev: false
