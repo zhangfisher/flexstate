@@ -72,6 +72,8 @@ export function getDecoratedMethods(instance:object,featureKey:string,includePar
  * 
  * 处理字符串参数
  * 
+ * 该参数可以是一个字符串或者返回字符串的函数
+ * 
  * 当参数是一个函数时执行该函数的结果
  * 
  * flexStringArgument("a")   == "a"
@@ -81,7 +83,7 @@ export function getDecoratedMethods(instance:object,featureKey:string,includePar
  * 
  * @param {*} param 
  */
- export function flexStringArgument(param:any,...args:Array<number | string>){
+ export function flexStringArgument(param:any,...args:any[]){
     let result = param
     if(typeof(param)==="function"){
         result= param.call(...args) 
@@ -117,7 +119,7 @@ export function getDecoratedMethods(instance:object,featureKey:string,includePar
 * 
 * @param {*} param 
 */
-export function flexStringArrayArgument(param:any,...args:Array<number | string>){
+export function flexStringArrayArgument(param:any,...args:any[]){
     let results = typeof(param)==="function"  ? param.call(...args)  : param
     results = Array.isArray(results) ? results : (results ? (typeof(results)==="string" ? results.split(",") : [results]) : [] ) 
     return results.map((result:any)=>typeof(result)==="function" ? result.call(...args) : (typeof(result)=="string" ? result :String(result)))

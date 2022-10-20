@@ -1,11 +1,13 @@
 import "reflect-metadata";
-import EventEmitter2 from "eventemitter2"
+import { LiteEventEmitter,LiteEventEmitterOptions } from "flex-decorators/liteEventEmitter"
+import timeoutWrapper from "flex-decorators/wrappers/timeout"
 import { 
     delayRejected , 
-    getDecoratedMethods,
     getClassStaticValue,
     isPlainObject,
-    flexStringArrayArgument 
+    flexStringArrayArgument, 
+    flexStringArgument,
+    delay
 } from "./utils"
 import { 
     StateMachineError,
@@ -20,10 +22,10 @@ import {
 } from "./errors"
 import merge from "lodash/merge"
 import isEmpty from "lodash/isEmpty"
+import { getDecorators } from "flex-decorators";
 
 
- 
- 
+  
 export type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'finally' 
 
 /**
@@ -31,20 +33,16 @@ export type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'fin
  * 状态动作
 */
 export interface FlexStateAction{
-    name          :string,             //指定唯一的动作名称
+    name          :string,                                      //指定唯一的动作名称
     alias?        : string,  									// 动作别名，当在实例中注入同名的方法时，如果指定别名，则使用该别名
-    timeout?      : number,                                     // 执行动作的超时时间
-    retryCount?   : number,                   				    // 指定动作执行失败时的重试次数
-    retryInterval?: number                    				    // 指定动作执行失败时的重试间隔
-    debounce?     : number,                                     // 防抖动
-    throttle?     : number                                      // 节流
+    injectMethod? : boolean,                                    // 是否上下文对象中注入同名的方法
     // 指定该动作仅在当前状态是when中的一个时才允许执行动作
     when?         : Array<string> | ((params:Object,current:FlexState)=>Array<string>),       		                
     pending?      : string | Function,                			// 开始执行动作前切换到pending状态
     resolved?     : string | Function,                			// 执行成功后切换到resolved状态
     rejected?     : string | Function,                			// 执行失败后切换到rejected状态
     finally?      : string | ((params:Object)=>Array<string>)   // 无论执行成功或失败均切换到finally状态
-    execute(params:Object):void       // 动作执行函数，具体干活的
+    execute(...args:any[]):void                                 // 动作执行函数，具体干活的
     [key:string]:any
 } 
 
@@ -58,64 +56,60 @@ export type FlexStateActionMap= Record<string,FlexStateAction>
  */
 export type FlexStateActionDecoratorOptions = Omit<FlexStateAction,"name" | "execute">
  
-export function state(options:FlexStateActionDecoratorOptions) {
-    return (target: Object, propertyKey: string | symbol)=>{        
-        Reflect.defineMetadata("flexstate:state", options, target, propertyKey);
-    }
-}
+
 
 /**
- * 状态机enter/leave/done/resume参数
+ * 状态机enter/leave/done/resume回调参数
  */
 export interface FlexStateTransitionHookArguments{
     from?         : string,
     to?           : string,
-    timeout?      : number,                             // 超时参数
-    debounce?     : number,                             // 防抖动
-    throttle?     : number,                             // 节流
-    retryInterval?: number                              // 重试间隔
     retryCount?   : number                              // 重试次数,
-    [key : string]:any    
     retry?(interval:number):void,                       // 马上执行重试
+    [key : string]:any    
 }
 
 /**
  * 状态转换钩子函数签名
  */
-export interface FlexStateTransitionHook{
-    (args:FlexStateTransitionHookArguments):Promise<any> | void
-}
+export type FlexStateTransitionHook = ((args:FlexStateTransitionHookArguments)=>Awaited<Promise<any>> | void ) | undefined  
+
+export type FlexStateTransitionHookExt = FlexStateTransitionHook | [FlexStateTransitionHook,{timeout:number}]
+
 export type FlexStateNext = string | Array<string> | (()=> Array<string> ) 
 
-/**
- * 状态声明
- */
-export interface FlexState{
+export interface NewFlexState{
     name    : string,                                               // 状态名称,一般为英文
     value   : number | null,                                        // <必须，状态值，Number类型>,
-    alias?  : string,                                               // 可选，状态别名                                 
+    alias?  : string | undefined,                                   // 可选，状态别名                                 
     title?  : string,                                               //<状态标题，一般用于显示> 
     initial?: boolean,                                              // <true/false,是否是初始化状态,只能有一个状态为初始状态>, 
     final?  : boolean,                                              // <true/false,最终状态>,                                                     
-    enter?  : FlexStateTransitionHook,                              // 当进入该状态时的钩子
-    leave?  : FlexStateTransitionHook,                              // 当离开该状态时的钩子
-    done?   : FlexStateTransitionHook,			                    // 当已切换至状态后
-    resume? : FlexStateTransitionHook,                              // 当离开后再次恢复时调用
+    enter?  : FlexStateTransitionHookExt,                           // 当进入该状态时的钩子
+    leave?  : FlexStateTransitionHookExt,                           // 当离开该状态时的钩子
+    done?   : FlexStateTransitionHookExt,			                // 当已切换至状态后
+    resume? : FlexStateTransitionHookExt,                           // 当离开后再次恢复时调用
     next?   : FlexStateNext                                         // 定义该状态的下一个状态只能是哪些状态,也可以是返回下一个状态列表的函数,*代表可以转换到任意状态
-    [key:string]:any                                                // 额外的参数
-} 
-
-export type FinalFlexState = Required<FlexState> & {next:Array<string> | (()=> Array<string> )}
+    [key    : string]:any                                           // 额外的参数
+}
+/**
+ * 状态声明
+ */
+export type FlexState = Required<NewFlexState> 
 
 // 状态参数，用来传状态参数时允许只传递状态名称或{}
 export type FlexStateArgs = string | number | FlexState   
 
 export type FlexStateMap = Record<string,FlexState> 
 
+export type NULL_STATE = Pick<FlexState,'name' | 'value' | 'next' >
+export type ERROR_STATE = Pick<FlexState,'name' | 'value' | 'next' | 'final' >
+
+
 // 状态机未初始化时的特殊状态值
-const NULL_STATE: FlexState = { name: 'NULL', value: null, next: "*" }
+const NULL_STATE: NULL_STATE = { name: 'NULL', value: null, next: "*" }
 // 出错状态
-const ERROR_STATE:FlexState = { name: "ERROR", final: true, value: Number.MAX_SAFE_INTEGER, next: "*" }
+const ERROR_STATE:ERROR_STATE = { name: "ERROR", final: true, value: Number.MAX_SAFE_INTEGER, next: "*" }
 
 
 /**
@@ -127,13 +121,22 @@ export enum FlexStateEvents {
 }
 
 
-const DefaultStateParams:FlexState = {
-    name       : "",                                    // 状态名称
-    value      : 0,                                     // 状态值，一般是数值>,
-    title      : "",                                    // 状态标题，一般用于显示
-    initial    : false,                                 // 是否是初始化状态 
-    final      : false,                                 // 最终状态
-    next       : [],                                    // 定义该状态的下一个状态只能是哪些状态
+/**
+ * 默认状态值
+ */
+const DefaultStateParams = {
+    name   : "",                                    // 状态名称
+    alias  : undefined,                             // 状态别名 
+    value  : 0,                                     // 状态值，一般是数值>,
+    title  : "",                                    // 状态标题，一般用于显示
+    initial: false,                                 // 是否是初始化状态 
+    final  : false,                                 // 最终状态
+    next   : [],                                    // 定义该状态的下一个状态只能是哪些状态
+    enter  : undefined,
+    done   : undefined,
+    leave  : undefined,
+    resume : undefined
+
 }
 
 
@@ -147,20 +150,20 @@ export enum FlexStateTransitionEvents{
 }
 
 export interface FlexStateTransitionEventParams{
-    event:string
-    from:string
-    to:string,
-    error?:Error,
-    [key:string]:any
+    event : string
+    from  : string
+    to    : string,
+    error?: Error,
+    [key  : string]:any
 }
 
 // 取消正在进行的转换,当发出此指令时，会让状态转换回调中止
 const CANCEL_TRANSITION = "cancelTransition"        
 const RESET_STATE_MACHINE = "resetStateMachine"        
 
-const EnterStateEvent = (name: string) => `${name}/enter`
-const LeaveStateEvent = (name: string) => `${name}/leave`
-const DoneStateEvent = (name: string) => `${name}/done`
+const EnterStateEvent  = (name: string) => `${name}/enter`
+const LeaveStateEvent  = (name: string) => `${name}/leave`
+const DoneStateEvent   = (name: string) => `${name}/done`
 const ResumeStateEvent = (name: string) => `${name}/resume`
 
 /**
@@ -168,11 +171,11 @@ const ResumeStateEvent = (name: string) => `${name}/resume`
  */
 export interface FlexStateTransitionHooks{
     onTransition?(params:FlexStateTransitionEventParams):void;    
-    onTransition?(params:FlexStateTransitionEventParams):Promise<any>;
-    onTransitionBegin?(params:FlexStateTransitionEventParams):Promise<any>;
-    onTransitionEnd?(params:FlexStateTransitionEventParams):Promise<any>;
-    onTransitionError?(params:FlexStateTransitionEventParams):Promise<any>;
-    onTransitionCancel?():Promise<any>;
+    onTransition?(params:FlexStateTransitionEventParams):Awaited<Promise<any>>;
+    onTransitionBegin?(params:FlexStateTransitionEventParams):Awaited<Promise<any>>;
+    onTransitionEnd?(params:FlexStateTransitionEventParams):Awaited<Promise<any>>;
+    onTransitionError?(params:FlexStateTransitionEventParams):Awaited<Promise<any>>;
+    onTransitionCancel?():Awaited<Promise<any>>;
 }
 
 export type TransitionHookTypes = keyof FlexStateTransitionHooks
@@ -185,7 +188,7 @@ export interface FlexStateMachineContext extends FlexStateTransitionHooks{
 /**
  * 状态机构造参数
  */
-export interface FlexStateOptions extends FlexStateTransitionHooks{
+export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOptions{
     name               : string,                                     // 当前状态机名称
     states             : Array<FlexState>,                           // 状态声明
     parent?            : FlexState,                                  // 父状态实例
@@ -198,30 +201,26 @@ export interface FlexStateOptions extends FlexStateTransitionHooks{
     history?           : number                                      // 记录状态转换历史，0=不记录，N=最大记录N条历史
     scope?             : FlexStateMachine,                           // 内部独立子状态域
 }  
- 
-export class FlexStateMachine extends EventEmitter2{            
 
+
+
+ 
+export class FlexStateMachine extends LiteEventEmitter{  
     static states : FlexStateMap = {  }
     static actions: FlexStateActionMap = {}
-    
-    states        : Record<string, FinalFlexState>= {}
-    #options      : Required<FlexStateOptions>                                // 配置参数 
-    #initialState : FlexState = NULL_STATE                                 // 初始状态
+    states        : Record<string, FlexState>= {}
+    #initialState : FlexState = NULL_STATE as  FlexState                   // 初始状态
     #finalStates  : Array<string> = []                                     // 保存最终状态名称
-    #currentState : FlexState = NULL_STATE                                 // 当前状态
+    #currentState : FlexState = NULL_STATE  as  FlexState                  // 当前状态
     #transitioning: boolean = false                                        // 是否正在转换中
     #running      : boolean = false                                        // 是否处于运行状态
-    #name         : string
+    #name         : string  = ''                                                // 状态机名称
     #history      : Array<[number,string]> = []                            // 状态转换历史=[[时间戳,状态名称],[时间戳,状态名称]]
-    #actions      : {[name:string]:FlexStateAction} = {}                   // 动作
-    #conflictMethods:Record<string,any> = {}
+    #actions      : {[name:string]:Function} = {}                          // 保存经过封装的动作
+    #conflictMethods:Record<string,any> = {};
+    [key:string]:any
     constructor(options : FlexStateOptions) {
-        super({
-            wildcard    : true,
-            delimiter   : "/",
-            maxListeners: 0
-        })
-        this.#options = Object.assign({
+        super(Object.assign({
             name: "",                                                       // 当前状态机名称
             parent            : null,                                       // 父状态
             context           : null,                                       // 当执行动作或状态转换事件时的this指向
@@ -231,23 +230,22 @@ export class FlexStateMachine extends EventEmitter2{
             injectActionMethod: true,                                       // 将动作方法注入到当前实例中
             throwActionError  : false,                                      // 是否在执行动作方法时抛出错误
             injectStateValue  : true,                                       // 在实例中注入：大写状态名称的字段，其值 =状态值
-            history           : 0,                                          // 记录状态转换历史，0=不记录，N=最大记录N条历史
-        }, options)
-        if(!this.#options.context) this.#options.context = this             //  
-        this.#name = this.#options.name || this.constructor.name
+            history           : 0                                           // 记录状态转换历史，0=不记录，N=最大记录N条历史
+        }, options)) 
+        if(!this.options.context) this.options.context = this             //  
+        this.#name = this.options.name || this.constructor.name
         this._addStates()                                                   // 所有状态声明
         this._addTransitionListeners()                                      // 扫描配置里面定义的所有状态侦听器
         this._registerActions()                                             // 注册动作
         this._addParentStateListener()                                      // 侦听父状态的进入与离开
-        if(this.#options.autoStart) this.start()                            // 自动开始切换
+        if(this.options.autoStart) this.start()                            // 自动开始切换
     }         
 
     /**************************** 公开属性 *****************************/
-    get name(): string {return this.#name}
-    get options() { return this.#options }                                  // 父状态
-    get context() { return this.#options.context }                          // 状态机上下文实例
-    get parent() { return this.#options.parent }                            // 父状态
-    get scope() { return this.#options.scope }                              // 父状态所在的状态机实例
+    get name(): string {return this.#name}    
+    get context() { return this.options.context }                          // 状态机上下文实例
+    get parent() { return this.options.parent }                            // 父状态
+    get scope() { return this.options.scope }                              // 父状态所在的状态机实例
     get running() { return this.#running }                                  // 当前作用域  
     get actions() { return this.#actions }                                  // 已注册的动作列表={<name>:{....}}
     get CURRENT() { return this.current.value }                             // 当前状态值  
@@ -255,7 +253,9 @@ export class FlexStateMachine extends EventEmitter2{
     get initial() { return this.#initialState }                             // 返回初始状态
     get transitioning() { return this.#transitioning }                      // 正在转换状态标志
     get history() { return this.#history }                                  // 返回状态历史
-
+    get options():Required<FlexStateOptions> & LiteEventEmitterOptions{
+        return super.options as Required<FlexStateOptions> & LiteEventEmitterOptions
+    }                                 
     /**************************** 初始化 *****************************/
     private _addParentStateListener(){
         if(this.parent){
@@ -282,7 +282,7 @@ export class FlexStateMachine extends EventEmitter2{
      *     next:[""]                                                        // 允许的下一个状态
      * }
      */
-    _addStates():void {        
+    private _addStates():void {        
         // 如果指定了父状态，则不读取context上面的states
         const staticStates:{[key:string]:FlexState} = this.parent ? {} : getClassStaticValue(this.context, "states", { default: {} })
         // static states <- this.options.states 
@@ -302,10 +302,9 @@ export class FlexStateMachine extends EventEmitter2{
             this.#initialState = this.states[Object.keys(this.states)[0]]
         }   
         // 自动添加一个错误状态                
-        this.states["ERROR"] = Object.assign({},ERROR_STATE) as FinalFlexState;
+        this.states["ERROR"] = Object.assign({},ERROR_STATE) as FlexState;
         (this as any)["ERROR"] = ERROR_STATE.value
-    }
-
+    } 
     /**************************** 状态机管理 *****************************/
     /**
      * 触发状态机事件
@@ -334,7 +333,7 @@ export class FlexStateMachine extends EventEmitter2{
     }
     private _stop(e?:any){
         if(this.#transitioning) this.emit(CANCEL_TRANSITION)
-        this.#currentState = NULL_STATE
+        this.#currentState = NULL_STATE as FlexState
         this.#running = false
         this._emitStateMachineEvent(FlexStateEvents.STOP,e)
     }
@@ -392,12 +391,12 @@ export class FlexStateMachine extends EventEmitter2{
         // 定义在构造参数中的回调
         eventMap.forEach(([event,method]) => { 
             if(typeof(this.options[method])==="function"){
-                this.on(event,this.#options[method]!.bind(context))
+                this.on(event,this.options[method]!.bind(context))
             }
         }) 
         // onTransition相当于所有事件
-        if(typeof(this.#options.onTransition)==="function"){
-            Object.values(FlexStateTransitionEvents).forEach(event=>this.on(event,this.#options.onTransition!.bind(context)))
+        if(typeof(this.options.onTransition)==="function"){
+            Object.values(FlexStateTransitionEvents).forEach(event=>this.on(event,this.options.onTransition!.bind(context)))
         }     
     }
     /**
@@ -471,8 +470,8 @@ export class FlexStateMachine extends EventEmitter2{
         finalState.createScope = (options:FlexStateOptions)=>this._createStateScope(finalState,options)
 
         // 7. 允许通过states.connected.on("enter",cb)形式订阅该状态的事件
-        finalState.on=(event:string,cb:FlexStateTransitionHook)=>this.on(`${stateName}/${event}`,cb)
-        finalState.off=(event:string,cb:FlexStateTransitionHook)=>this.off(`${stateName}/${event}`,cb) 
+        finalState.on=(event:string,cb:FlexStateTransitionHook)=>this.on(`${stateName}/${event}`,cb as Function)
+        finalState.off=(event:string,cb:FlexStateTransitionHook)=>this.off(`${stateName}/${event}`,cb as Function) 
         
 
         this.states[stateName] = finalState        
@@ -513,7 +512,7 @@ export class FlexStateMachine extends EventEmitter2{
      * @param {*} args   当param是一个函数时用来额外传递给函数的参数
      * @returns 状态   返回完整的数据{...}
      */
-     getState(param: FlexStateArgs | Function ,...args:Array<any>):FlexState {
+     getState(param: FlexStateArgs | Function | undefined,...args:Array<any>):FlexState {
         let resultState  
         resultState = typeof(param)==="function" ? (param as Function).call(this,...args) : param
         if(typeof(resultState)==="string" && (resultState in this.states)){
@@ -534,8 +533,8 @@ export class FlexStateMachine extends EventEmitter2{
      * })
      * @param {*} state 
      */
-    add(state:FlexState){
-        let finalState = Object.assign({},DefaultStateParams,state)
+    add(state:NewFlexState){
+        let finalState = Object.assign({}, DefaultStateParams, state) as unknown as FlexState
         if(!finalState.name || !finalState.value) throw new StateMachineError("状态必须指定有效的name和value参数")
         if((finalState.name in this.states) || Object.values(this.states).findIndex(s=>s.value===finalState.value)!=-1) throw new StateMachineError(`状态<{${finalState.name}}>已经存在`)
         return this._add(finalState)
@@ -546,10 +545,10 @@ export class FlexStateMachine extends EventEmitter2{
      */
     remove(name:string) {
         if(name in this.states){    
-            this.removeAllListeners(`${name}/enter`)
-            this.removeAllListeners(`${name}/leave`)
-            this.removeAllListeners(`${name}/done`)
-            this.removeAllListeners(`${name}/resume`)
+            this.offAll(`${name}/enter`)
+            this.offAll(`${name}/leave`)
+            this.offAll(`${name}/done`)
+            this.offAll(`${name}/resume`)            
             delete this.states[name]
         }
     }
@@ -561,7 +560,8 @@ export class FlexStateMachine extends EventEmitter2{
      * @param {*} state  状态名称 | 状态值 | FlexState
      * @returns 
      */
-    isValid(state:FlexStateArgs):boolean {
+    isValid(state:any):boolean {
+        if(!state) return false
         if(typeof(state)==="string"){
             return state in this.states
         }else if(typeof(state)==="number"){
@@ -631,28 +631,18 @@ export class FlexStateMachine extends EventEmitter2{
      * 
      *
      */
-    _registerActions() {
+    private _registerActions() {
         this.#actions       = {}        
-        // 获取装饰器装饰的动作函数                                     
-        let decoratedActions = getDecoratedMethods(this.context,"state") 
-        // decorators = [{$$decorator,$$isAsync,$$isGenerator,name,finally,rejected,resolved,timeout,retryCount,retryInterval]
-        // 如果在一个方法上重复使用@state,则不能生效，只取最后面的一个生效
-        for(let [name,decorators] of Object.entries(decoratedActions)){
-            let index = decorators.findIndex(decorator=>decorator.$$decorator==="state")
-            if(index==-1) continue;
-            decoratedActions[name] = Object.assign({},decorators[index])
-            delete decoratedActions[name].$$decorator
-            decoratedActions[name].execute = this[name]
-        }
-        // 扫描所有被@state装饰的方法均会在方法原型上添加一个$$STATE_MACHINE_ACTION属性
-        // 因此可以通过扫描$$STATE_MACHINE_ACTION来获取所有被@state装饰的状态
-        let actions= Object.assign({},decoratedActions,this.options.actions)
-        for (let [name, action] of Object.entries(actions)) {
+        // 获取装饰器装饰的动作函数       
+        // decoratedActions={method1:[{参数},{参数}]}
+        let decoratedActions = getDecorators(this.context,"flexState") 
+        let actions = Object.assign({},decoratedActions,this.options.actions)
+        for (let [name, [action]] of Object.entries(actions)) {
             try{
                 action.name = name
                 this.register(action)
-            }catch(e){
-                this.logger.error("注册异步状态机动作{}出错:{}",[name,e.message])
+            }catch(e:any){
+                console.error("注册异步状态机动作{}出错:{}",[name,e.message])
             }
         }
     }
@@ -667,7 +657,7 @@ export class FlexStateMachine extends EventEmitter2{
         @param {*} action 
         @returns {Boolean} <true/false>
      */
-    _normalizeAction(action:FlexStateAction){
+    private _normalizeAction(action:FlexStateAction){
         const name = action.name
         // 1. 参数检查 
         if (typeof (action.execute) != "function") {
@@ -684,26 +674,20 @@ export class FlexStateMachine extends EventEmitter2{
                     throw new StateMachineError(`动作参数${param}只能是有效的状态名称或者函数`)
                 }
             }
-        })
-  
+        })  
         // when是一个数组[<状态>,<状态>,...]
-        action.when = flexStringArrayArgument(action.when,this.context,this.current)
-        
-        // 生成增强的动作执行参数：支持超时、重试、节流、去抖动机制
-        action.execute = reliable(action.execute,action)
-
-
+        action.when = flexStringArrayArgument(action.when,this.context,this.current)              
         // 判断能否从when中其中一个状态切换到pending状态
         // 仅当pending是一个字符串时生进行校验，如果是一个函数，则只能在动作执行时进行校验
-        if(typeof(action.pending)=="string" && action.when.length>0){ 
+        if(typeof(action.pending)=="string" && Array.isArray(action.when) && action.when.length>0){ 
             // 如果pending在when中
             if(action.when.some(stateName=>stateName===action.pending)) return true            
             if(!action.when.some(stateName=>{
                 const nextStates = this.getState(stateName).next                
                 // 由于next参数可以是一个函数时，该函数仅在切换时被调用，因此在校验时只能先认为有效的
-                return Array.isArray(nextStates) ? nextStates.includes(action.pending) : true
+                return Array.isArray(nextStates) ? nextStates.includes(action.pending as string) : true
             })){
-                throw new StateMachineError(t("状态动作<{}>的pending参数无效,无法从<{}>切换到<{}>",[name,action.when.join(),action.pending]))
+                throw new StateMachineError(`状态动作<${name}>的pending参数无效,无法从<{${action.when.join()}}>切换到<${action.pending}>`)
             }
         }
 
@@ -714,28 +698,33 @@ export class FlexStateMachine extends EventEmitter2{
         const endStates = ["resolved","rejected","finally"]
         endStates.forEach((param)=>{
             if(typeof(action[param])=="string"){             
-                if(!fromStates.some(stateName=>{
+                if(Array.isArray(fromStates) && !fromStates.some((stateName:string | undefined)=>{
                     const nextStates = this.getState(stateName).next                
                     return Array.isArray(nextStates) ? nextStates.includes(action[param]) : true
                 })){
-                    throw new StateMachineError(t("状态动作<{}>的<{}>参数无效,无法从{}切换到",[name,param,fromStates.join(),action[param]]))
+                    throw new StateMachineError(`状态动作<${name}>的<${param}>参数无效,无法从${fromStates.join()}切换到${action[param]}`)
                 }
             }
         })
 
     }
-    _createActionExecutor(action){
-        return async function (...args) {       
+    /**
+     * 创建动作执行函数
+     * @param action 
+     * @returns 
+     */
+    private _createActionExecutor(action:FlexStateAction){
+        return async function (this:any,...args:any[]) {       
             this._assertRunning()           
             if(this.isFinal()) throw new FinalStateError() 
-            let result, oldStateName,finalState,pendingState,hasError = false,isPending=false
+            let result, oldStateName,finalState,pendingState,hasError:any = false,isPending=false
             try{
                 oldStateName = this.current.name
                 // 1. 判断动作执行的前置状态: 仅在当前状态==when指定的状态或者当前状态=null时才允许执行
                 let whenState =flexStringArrayArgument(action.when,this.context,oldStateName)
                 // 如果当前状态是NULL,则when参数不起作用。NULL状态可以转换至任意状态
                 if(oldStateName!==null && whenState.length>0 &&  !whenState.includes(oldStateName)){
-                    throw new TransitionError(t("动作<{}>只能在状态<{}>下才允许执行,当前状态是<{}>",[action.name,this.current.name,whenState]))
+                    throw new TransitionError(`动作<${action.name}>只能在状态<${this.current.name}>下才允许执行,当前状态是<${whenState}>`)
                 }                    
                 // 2. 转换到pending状态: 如果指定了pending，则转换至该状态
                 pendingState = flexStringArgument(action.pending,this.context,result)
@@ -807,10 +796,6 @@ export class FlexStateMachine extends EventEmitter2{
      *      rejected     : "<状态名>" || (error)=>{},           // 执行失败后的状态
      *      finally      : "<状态名>" || (error,result)=>{},    // 无论成功或失败时的回调,也可以是一个状态，如果指定了此值,则resolved或rejected无效
      *      timeout      : 0                                    // 执行动作的超时时间,默认不限
-     *      retryCount   : <重试次数>,
-     *      retryInterval: <重试间隔>
-     *      throttle     : <节流时间>
-     *      debounce     : <去抖动>
      * }
      * 
      * register(name,action)
@@ -825,7 +810,8 @@ export class FlexStateMachine extends EventEmitter2{
         this.#actions[action.name] = fn.bind(this.context)
         // 在实现中为该动作生成一个[action.name]的实例方法
         if(this.options.injectActionMethod) {
-            const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name
+            // 如果类上存在与动作名称相同的方法时，需要为动作指定一个别名，否则会给出警告
+            const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name           
             if(actionName in this.context) {
                 if(!this.#conflictMethods) this.#conflictMethods=[this.context[actionName]]  // 保存冲突方法的引用以备恢复
                 this.#conflictMethods[actionName] = this.context[actionName]
@@ -849,7 +835,7 @@ export class FlexStateMachine extends EventEmitter2{
     }
     /**
      * 注销动作
-     * @param {*} name 
+     * @param {*} name  动作名称
      */
     unregister(name: string){
         if(name in this.#actions){            
@@ -923,11 +909,11 @@ export class FlexStateMachine extends EventEmitter2{
             // 3. 进入next前，先离开当前状态： 当前状态可以通过触发Error来阻止状态切换
             if(currentState.name!=null){
                 const leaveResult = await this._emitStateHookCallback(LeaveStateEvent(currentState.name) , { ...transitionInfo })
-                if(leaveResult.error){     // 没有出错，代表着可以进入下一个状态 
+                if(leaveResult.error){     
                     this._safeEmit(FlexStateTransitionEvents.ERROR, {error:leaveResult.error,...transitionInfo})
                     // 如果leave钩子抛出该错误，则说明
                     if(leaveResult.error instanceof SideEffectTransitionError){
-                        await this._transitionToError({...transitionInfo,error:resumeResult.error})  // 转换到错误状态
+                        await this._transitionToError({...transitionInfo,error:leaveResult.error})  // 转换到错误状态
                     }
                     throw leaveResult.error
                 }
@@ -939,7 +925,7 @@ export class FlexStateMachine extends EventEmitter2{
             if(enterResult.error){
                 this._safeEmit(FlexStateTransitionEvents.ERROR, {event:"ERROR",error:enterResult.error,...transitionInfo})
                 if(enterResult.error instanceof SideEffectTransitionError){// 不可消除的副作用
-                    await this._transitionToError({...transitionInfo,error:resumeResult.error})  // 转换到错误状态
+                    await this._transitionToError({...transitionInfo,error:enterResult.error})  // 转换到错误状态
                 }else{// 可消除的副作用
                     // 当无法进入nextState时，应该调用currentState的resume回调来恢复副作用
                     const resumeResult = await this._emitStateHookCallback(ResumeStateEvent(currentState.name), {...transitionInfo,error:enterResult.error})
@@ -968,7 +954,7 @@ export class FlexStateMachine extends EventEmitter2{
         }
         return this
     } 
-    _addHistory(stateName:string){
+    private _addHistory(stateName:string){
         if(this.options.history>0){
             this.history.push([Date.now(),stateName]) 
             if(this.history.length>this.options.history) this.history.splice(0,1)
@@ -977,7 +963,7 @@ export class FlexStateMachine extends EventEmitter2{
     /**
      * 触发事件并忽略事件处理函数的错误
      */  
-    _safeEmit(event:string, ...args:any[]){
+     private _safeEmit(event:string, ...args:any[]){
         try{
             this.emit(event,...args)
         }catch(e){  }
@@ -998,7 +984,7 @@ export class FlexStateMachine extends EventEmitter2{
      * @param {*} params
      * @returns
      */
-    async _emitStateHookCallback(event:string, params:any) {
+    private async _emitStateHookCallback(event:string, params:any) {
         let eventResults,returnValue:Record<string,any> = {}
         try{
             // 触发onStateEnter等事件
@@ -1058,21 +1044,19 @@ export class FlexStateMachine extends EventEmitter2{
         }
         // next可以是一个函数，该函数(toState)
         if (fromState && fromState.next) {
-            let nextStates  = fromState.next as string[] | (()=>string)
-            if(fromState.next==="*"){
-                return true
-            }else if(typeof (fromState.next) == "function") {
-                let nextStates = fromState.next.call(this)
-                nextStates  =Array.from(nextStates) ? nextStates : (typeof(nextStates) == "string" ? [nextStates] : [])
-                if(!nextStates.includes("ERROR")) nextStates.push("ERROR")            // 任何状态均可以转换至错误状态
+            if(fromState.next==="*") return true
+            let nextStates  = fromState.next  
+            if(typeof (fromState.next) == "function") {
+                nextStates = fromState.next.call(this)
             }
+            nextStates = Array.isArray(nextStates) ? nextStates : (typeof(nextStates) == "string" ? [nextStates] : [])
+            if(!nextStates.includes("ERROR")) nextStates.push("ERROR")            // 任何状态均可以转换至错误状态
             // 如果next中包括*符号代表可以切换到任意状态
             return ((nextStates.some(s=>s==="*")) || (nextStates.length === 1 && typeof(nextStates[0])=='string' && nextStates[0]==="ERROR") ? true : nextStates.includes(toState.name))
         } else {
             return true
         }
     }
-
     /**
      * 封装状态回调函数，使状态回调函数的执行支持：
      *
@@ -1092,9 +1076,7 @@ export class FlexStateMachine extends EventEmitter2{
                         {
                             timeout: 0,                     // 超时参数
                             retryCount:1,                   // 重试次数
-                            retryInterval:1000,              // 重试间隔
-                            debounce:0,
-                            throttle:0
+                            retryInterval:1000,             // 重试间隔
                         }
                    ],
                    enter:fn
@@ -1110,26 +1092,21 @@ export class FlexStateMachine extends EventEmitter2{
      * 
      * 
      */
-    _makeStateHookCallback(fn) {
-        let runOptions={timeout:0,retryCount:0,retryInterval:0,throttle:0,debounce:0}
-        let [cb,opts={}] = Array.isArray(fn) ? fn : [fn,{}];
-        Object.assign(runOptions,opts)
-        if(typeof(fn.timeout)==="number") runOptions.timeout = fn.timeout        
-        if(typeof(fn.retryCount)==="number") runOptions.retryCount = fn.retryCount        
-        if(typeof(fn.retryInterval)==="number") runOptions.retryInterval = fn.retryInterval        
-        if(typeof(fn.debounce)==="number") runOptions.debounce = fn.debounce        
-        if(typeof(fn.throttle)==="number") runOptions.throttle = fn.throttle       
-
-        let wrapperFn = reliable(fn,runOptions)
-
-        return (args={}) => new Promise(async (resolve, reject) => {
-            const cancel = () => reject(new CancelledTransitionError())
+    private _makeStateHookCallback(fn:FlexStateTransitionHookExt) {
+        let [hookFn,runOptions] = Array.isArray(fn) ? fn : [fn,{timeout:0}];
+        if(!runOptions.timeout) runOptions.timeout = 0                 
+        let wrapperFn = timeoutWrapper(hookFn as any,{value:runOptions.timeout})
+        return (args:FlexStateTransitionHookArguments) => new Promise(async (resolve, reject) => {
+            // 取消操作
+            const cancel = () => reject(new CancelledTransitionError())       
+            // 订阅取消事件
             this.once(FlexStateTransitionEvents.CANCEL, cancel)
-            let numberOfCall = 1,retryInterval=0,hasError
-            args.retry = (ms=0) =>{retryInterval=ms;numberOfCall++;throw new Error()}
+            let callCount = 1,retryInterval=0,hasError
+            // 供调用
+            args.retry = (ms=0) =>{retryInterval=ms;callCount++;throw new Error()}
             args.retryCount = 0
-            while(numberOfCall>0){
-                numberOfCall--      
+            while(callCount>0){
+                callCount--      
                 try{
                     let result = await wrapperFn.call(this.context, args)  
                     resolve(result)
@@ -1138,7 +1115,7 @@ export class FlexStateMachine extends EventEmitter2{
                 }finally{
                     args.retryCount++
                 }
-                if(numberOfCall>0 && retryInterval>0) await delay(retryInterval)
+                if(callCount>0 && retryInterval>0) await delay(retryInterval)
             }                
             this.off(FlexStateTransitionEvents.CANCEL, cancel)  // 正常结束时，就应清除上面侦听once的cancel回调，也就是说不需要再侦听取消操作了            
             if(hasError) reject(hasError)
@@ -1156,11 +1133,12 @@ export class FlexStateMachine extends EventEmitter2{
      * @param {*} name 动作名称
      * @param args
      */
-    async execute(name, ...args) {     
+    async execute(name: string, ...args:any[]) {     
         this._assertRunning()   
         return await this.#actions[name].call(this,...args)
     }
-    _assertRunning(){
+
+    private _assertRunning(){
         if(!this.#running) throw new NotRunningError()
     }
     /**
@@ -1168,10 +1146,10 @@ export class FlexStateMachine extends EventEmitter2{
      * 
      * @param {*} state   状态名称或状态值
      */
-    async waitForState(state){
+    async waitForState(state:FlexStateArgs){
         const forState = this.getState(state)
         if(this.current.name===forState.name || this.current.value===forState.value) return 
-        return await this.waitFor(`${forState.name}/done`)        
+        return await this.wait(`${forState.name}/done`)        
     }
     /**
      * 等待进入初始状态
@@ -1181,5 +1159,5 @@ export class FlexStateMachine extends EventEmitter2{
         return this.waitForState(this.initial)
     } 
 }
-
+export * from "./decorator"
 
