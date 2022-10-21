@@ -13,7 +13,7 @@ import merge from "lodash/merge";
  * @returns 
  */
 export async function delay(t:number = 100):Promise<void> {
-    return new Promise((resolve, reject)=>{
+    return new Promise((resolve)=>{
         setTimeout(resolve,t)
     })
 }
@@ -29,44 +29,6 @@ export function delayRejected(t:number = 100):Promise<Error>{
         },t);
     })
 }
-
-/**
- * 找出所有被装饰器的方法
- * @returns 
- */
-export function getDecoratedMethods(instance:object,featureKey:string,includeParent:boolean=true,ignoreFields:Array<string>=[]):Record<string,Function> { 
-    let menbers = {}
-    let __proto__ = (instance as any).__proto__
-    while(__proto__.constructor.name!="Object"){
-        try{
-            for(let name of  Object.getOwnPropertyNames(__proto__)){
-                //
-                if(ignoreFields.includes(name)) continue                
-                // 装饰器只能装饰在函数上，因此略过属性
-                if(isPropertyMember(__proto__, name)) continue                
-                let func 
-                try{
-                    func = (instance as any)[name]
-                }catch(e){
-
-                }                
-                if(func!=undefined && func.hasOwnProperty && func.hasOwnProperty(featureKey)){ 
-                    menbers[name]={
-                        ...func[featureKey],
-                        execute:func
-                    }
-                }    
-            }
-            __proto__ = __proto__.__proto__
-            // 是否在父类中遍历
-            if(!includeParent) break
-        }catch(e){
-            break;
-        }
-    } 
-    return menbers
-}
-
 
 /**
  * 

@@ -4,24 +4,26 @@ specifiers:
   '@babel/core': ^7.14.3
   '@babel/preset-env': ^7.14.2
   '@swc/core': ^1.3.9
-  '@types/eventemitter2': ^4.1.0
-  '@types/lodash': ^4.14.185
+  '@types/lodash': ^4.14.186
   '@vitest/ui': ^0.24.3
   babel-jest: ^27.0.1
+  flex-decorators: file:.yalc\flex-decorators
+  lodash: ^4.17.21
   reflect-metadata: ^0.1.13
   tsup: ^6.3.0
   type-fest: ^2.19.0
   vitest: ^0.24.3
 
 dependencies:
-  '@types/eventemitter2': 4.1.0
-  '@types/lodash': 4.14.185
+  flex-decorators: file:.yalc/flex-decorators
+  lodash: 4.17.21
   reflect-metadata: 0.1.13
 
 devDependencies:
   '@babel/core': 7.19.0
   '@babel/preset-env': 7.19.0_@babel+core@7.19.0
   '@swc/core': 1.3.9
+  '@types/lodash': 4.14.186
   '@vitest/ui': 0.24.3
   babel-jest: 27.5.1_@babel+core@7.19.0
   tsup: 6.3.0_@swc+core@1.3.9
@@ -1528,13 +1530,6 @@ packages:
     resolution: {integrity: sha512-hC7OMnszpxhZPduX+m+nrx+uFoLkWOMiR4oa/AZF3MuSETYTZmFfJAHqZEM8MVlvfG7BEUcgvtwoCTxBp6hm3g==}
     dev: true
 
-  /@types/eventemitter2/4.1.0:
-    resolution: {integrity: sha512-IyrCYFL+FakW3gVd/x2b0QIpcVrdgcNCkj985xoBVinc0rNwoV87IbBx7KlS5aP+bx7uIZxVypLCiSwmI4jZrg==}
-    deprecated: This is a stub types definition for eventemitter2 (https://github.com/asyncly/EventEmitter2). eventemitter2 provides its own type definitions, so you don't need @types/eventemitter2 installed!
-    dependencies:
-      eventemitter2: 6.4.9
-    dev: false
-
   /@types/graceful-fs/4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
@@ -1557,9 +1552,9 @@ packages:
       '@types/istanbul-lib-report': 3.0.0
     dev: true
 
-  /@types/lodash/4.14.185:
-    resolution: {integrity: sha512-evMDG1bC4rgQg4ku9tKpuMh5iBNEwNa3tf9zRHdP1qlv+1WUg44xat4IxCE14gIpZRGUUWAx2VhItCZc25NfMA==}
-    dev: false
+  /@types/lodash/4.14.186:
+    resolution: {integrity: sha512-eHcVlLXP0c2FlMPm56ITode2AgLMSa6aJ05JTTbYbI+7EMkCEE5qk2E41d5g2lCVTqRe0GnnRFurmlCsDODrPw==}
+    dev: true
 
   /@types/node/18.7.18:
     resolution: {integrity: sha512-m+6nTEOadJZuTPkKR/SYK3A2d7FZrgElol9UP1Kae90VVU4a6mxnPuLiIW1m4Cq4gZ/nWb9GrdVXJCoCazDAbg==}
@@ -2187,10 +2182,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /eventemitter2/6.4.9:
-    resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
-    dev: false
-
   /execa/5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -2577,6 +2568,10 @@ packages:
   /lodash.sortby/4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
     dev: true
+
+  /lodash/4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+    dev: false
 
   /loupe/2.3.4:
     resolution: {integrity: sha512-OvKfgCC2Ndby6aSTREl5aCCPTNIzlDfQZvZxNUrBrihDhL3xcrYegTblhmEiCrg2kKQz4XsFIaemE5BF4ybSaQ==}
@@ -3017,6 +3012,11 @@ packages:
       any-promise: 1.3.0
     dev: true
 
+  /throttle-debounce/5.0.0:
+    resolution: {integrity: sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==}
+    engines: {node: '>=12.22'}
+    dev: false
+
   /tinybench/2.3.1:
     resolution: {integrity: sha512-hGYWYBMPr7p4g5IarQE7XhlyWveh1EKhy4wUBS1LrHXCKYgvz+4/jCqgmJqZxxldesn05vccrtME2RLLZNW7iA==}
     dev: true
@@ -3265,3 +3265,12 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
     dev: true
+
+  file:.yalc/flex-decorators:
+    resolution: {directory: .yalc/flex-decorators, type: directory}
+    name: flex-decorators
+    version: 1.0.5
+    dependencies:
+      reflect-metadata: 0.1.13
+      throttle-debounce: 5.0.0
+    dev: false

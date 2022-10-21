@@ -1,6 +1,6 @@
-import { FlexStateMachine,state,StateMachineError,FinalStateError } from "../"
+import { expect, test,describe, vi,beforeEach } from 'vitest'
+import { FlexStateMachine,state,StateMachineError,FinalStateError } from ".."
 import { delay } from "../utils"
-import { expect, test, beforeEach } from 'vitest'
 
 
 class TcpClientStateMachine extends FlexStateMachine {
@@ -39,10 +39,10 @@ describe("状态机",()=>{
                 C:{value:3},
             }
         })
-        const startCallback = jest.fn();
+        const startCallback = vi.fn();
         fsm.on("start",startCallback)
         expect(fsm.running).toBeFalsy()
-        expect(fsm.current.name).toBe(null)
+        expect(fsm.current.name).toBe("NULL")
         await fsm.start()
         expect(fsm.current.name).toBe("A")
         expect(fsm.running).toBeTruthy()      
@@ -58,11 +58,11 @@ describe("状态机",()=>{
                 C:{value:3},
             }
         })
-        const stopCallback = jest.fn();
+        const stopCallback = vi.fn();
         fsm.on("stop",stopCallback)
         await fsm.waitForInitial() 
         await fsm.stop()
-        expect(fsm.current.name).toBe(null)
+        expect(fsm.current.name).toBe("NULL")
         expect(fsm.running).toBeFalsy()      
         expect(stopCallback.mock.calls.length).toBe(1);
         expect(stopCallback).toHaveBeenCalled();
@@ -82,10 +82,10 @@ describe("状态机",()=>{
                 C:{value:3},
             }
         })
-        const stopCallback = jest.fn();
+        const stopCallback = vi.fn();
         fsm.on("stop",stopCallback)        
         await fsm.start()
-        expect(fsm.current.name).toBe(null)
+        expect(fsm.current.name).toBe("NULL")
         expect(fsm.running).toBeFalsy()      
         expect(stopCallback.mock.calls.length).toBe(1);
         expect(stopCallback).toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("状态机",()=>{
 describe("状态转换",()=>{   
 
     test("正常状态切换",async () => {
-        let beginStates = [], endStates = [] 
+        let beginStates:string[] = [], endStates:string[] = [] 
         const fsm = new TcpClientStateMachine({
             onTransitionBegin:({from,to}) => {
                 beginStates.push(to)
@@ -126,8 +126,8 @@ describe("状态转换",()=>{
     })
 
     test("侦听状态切换事件",async () => {
-        const actualEvents = []
-        const expectEvents = [
+        const actualEvents:string[] = []
+        const expectEvents:string[] = [
             "onInitialLeave","Initial/leave",
             "onConnectingEnter","Connecting/enter",
             "onConnectingDone","onConnecting","Connecting/done"
@@ -155,13 +155,13 @@ describe("状态转换",()=>{
 
 
     test("切换到错误的状态",async () => {
-        const actualEvents = []
+        const actualEvents:string[] = []
         const expectEvents = ["onTransitionBegin","onTransitionEnd","onTransitionCancel"] // 第一个事件是进入初始化时触发的
         const fsm = new TcpClientStateMachine({
             onTransitionBegin:({from,to})=>{
                 actualEvents.push("onTransitionBegin")
             },
-            onTransitionCancel:({from,to})=>{
+            onTransitionCancel:()=>{
                 actualEvents.push("onTransitionCancel")
             },
             onTransitionEnd:({from,to})=>{
@@ -180,7 +180,7 @@ describe("状态转换",()=>{
 
 
     test("在状态切换事件中阻止切换",async () => {
-        const actualEvents = []
+        const actualEvents:string[] = []
         const expectEvents = ["Initial/leave","onConnectingEnter"]
         class MyTcpClient extends TcpClientStateMachine{
             onConnectingEnter(){
@@ -207,8 +207,8 @@ describe("状态转换",()=>{
 
 
     test("在状态定义中侦听状态切换事件以及无效转换",async () => {
-        const actualEvents = []
-        const expectEvents = [
+        const actualEvents:string[] = []
+        const expectEvents:string[] = [
             "onTransitionBegin","A/enter","A/done","onTransitionEnd",   // Initial
             "onTransitionBegin","A/leave","B/enter","B/done","onTransitionEnd",  // A->B
             "onTransitionBegin","B/leave","C/enter","C/done","onTransitionEnd",  // B->C
@@ -262,8 +262,8 @@ describe("状态转换",()=>{
     })
 
     test("异步转换回调事件",async () => {
-        const actualEvents = [] // A,B,C,A,B,C,.....
-        const expectEvents = ["A","B","C"]
+        const actualEvents:string[] = [] // A,B,C,A,B,C,.....
+        const expectEvents:string[] = ["A","B","C"]
         const expecteCallbackResults = []
         const fsm  = new FlexStateMachine({
             onTransitionEnd:({from,to})=>actualEvents.push(to),
@@ -296,8 +296,8 @@ describe("状态转换",()=>{
     })
 
     test("多个异步转换回调事件", async () => {
-        const actualEvents = [] 
-        const onStateEvent = event => async () => { await delay(1); actualEvents.push(event) }
+        const actualEvents:string[] = [] 
+        const onStateEvent = (event:string) => async () => { await delay(1); actualEvents.push(event) }
         class MyStateMachine extends FlexStateMachine {
             async onAEnter() { await onStateEvent("onAEnter")() }
             async onALeave() { await onStateEvent("onALeave")() }
@@ -353,7 +353,7 @@ describe("状态转换",()=>{
         await fsm.transition("C")
 
         // 生成状态从from切换到to应该触发的事件名称数组
-        const getTransitionEvents = (from, to) => {
+        const getTransitionEvents = (from:string, to:string) => {
             let events = []
             if (from) events.push(...[ `${from}.Leave`,`on${from}Leave`, `${from}/Leave`])
             events.push(...[
@@ -363,7 +363,7 @@ describe("状态转换",()=>{
             return events
         }
         const expectEvents = [
-            ...getTransitionEvents(null, "A"),
+            ...getTransitionEvents('NULL', "A"),
             ...getTransitionEvents("A", "B"),
             ...getTransitionEvents("B", "C")
         ]
@@ -373,8 +373,8 @@ describe("状态转换",()=>{
     })
 
     test("连续多次转换状态",async () => {
-        const actualEvents = [] // A,B,C,A,B,C,.....
-        const expectEvents = [ ]
+        const actualEvents :string[] = [] // A,B,C,A,B,C,.....
+        const expectEvents:string[] = [ ]
         const fsm  = new FlexStateMachine({
             onTransitionEnd:({from,to})=>actualEvents.push(to),
             states:{
@@ -405,8 +405,8 @@ describe("状态转换",()=>{
         expect(actualEvents).toStrictEqual(expectEvents)
     })
     test("切换到Final状态后,再次转换会出错，重置后又可以转换",async () => {
-        const actualEvents = [] // A,B,A,B,A,A,B
-        const expectEvents = [ ]
+        const actualEvents:string[] = [] // A,B,A,B,A,A,B
+        const expectEvents:string[] = [ ]
         const fsm  = new FlexStateMachine({
             states:{
                 A: { value: 1, initial: true, next: ["B"] },
@@ -414,7 +414,7 @@ describe("状态转换",()=>{
                 C: { value: 3, next: ["A"] }
             },
             context: {
-                onTransition:({event,from,to})=>{
+                onTransition:({event,from,to}:{event:string,from:string,to:string})=>{
                   if(event==="END")   actualEvents.push(to)
                 }
             }
@@ -442,8 +442,8 @@ describe("状态转换",()=>{
 
     test("断开重连机制",async () => {
         const count = 100 
-        const actualEvents = []
-        const expectEvents = [
+        const actualEvents:string[] = []
+        const expectEvents:string[] = [
             "Initial/enter","Initial/done",
             "Initial/leave","Connecting/enter","Connecting/done","Connecting/leave","Connected/enter","Connected/done","Connected/leave","Disconnected/enter","Disconnected/done","---"
         ] 
@@ -472,14 +472,14 @@ describe("状态转换",()=>{
             }
         })    
         
-        fsm.on("*/leave",({from,to})=>actualEvents.push(`${from}/leave`)) 
-        fsm.on("*/enter", ({from,to}) => actualEvents.push(`${to}/enter`))                
-        fsm.on("*/done",({params,from,to})=>{
+        fsm.on("*/leave",({from,to}:{from:string,to:string})=>actualEvents.push(`${from}/leave`)) 
+        fsm.on("*/enter", ({from,to}:{from:string,to:string}) => actualEvents.push(`${to}/enter`))                
+        fsm.on("*/done",({params,from,to}:{params:any,from:string,to:string})=>{
             actualEvents.push(`${to}/done`)
             if(to==="Disconnected") {
                 actualEvents.push("---")
                 if(params<count){
-                    fsm.connect().catch(e=>{})  // 当断开时自动重新执行连接动作
+                    fsm.connect().catch((e:any)=>{})  // 当断开时自动重新执行连接动作
                 }                
             }
         })         
@@ -859,7 +859,7 @@ describe("子状态",()=>{
             },
             onTransitionEnd:({from,to})=>actualEvents.push(`Connected/${to}`)
         })         
-        const startFn = jest.fn(),stopFn = jest.fn()
+        const startFn = vi.fn(),stopFn = vi.fn()
         ConnectedFSM.on("start",startFn)
         ConnectedFSM.on("stop",stopFn)
         await fsm.start()
@@ -969,7 +969,7 @@ describe("错误处理", () => {
                 endStates.push(to)
             }        
         })        
-        const errorCallback = jest.fn()
+        const errorCallback = vi.fn()
         // 转换到错误状态的回调
         fsm.on("ERROR/done", errorCallback)
         await fsm.waitForInitial()  
