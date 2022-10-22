@@ -430,15 +430,15 @@ await fs.transition("Disconnecting")  // 转换失败
 - **状态处于FINAL状态时，不允许再进行状态转换**
 
 当状态机处于任一个`FINAL`状态时，将不能再转换至其他状态，也不能执行动作。
-## 拦截状态转换
-### 支持的钩子类型
+# 拦截状态转换
+## 支持的钩子类型
 状态转换钩子指的是在状态转换其间调用的函数，支持以下类型的拦截钩子。
 
 - `**enter**`：当准备进入某个状态时调用，可以通过返回false和触发错误来阻止状态转换。
 - `**leave**`：当准备离开某个状态时调用，可以通过返回false和触发错误来阻止状态转换。
 - `**done**`：当已转换到某个状态时调用，该钩子不处理错误，不能通过返回false和触发错误来阻止状态转换。
 - `**resume**`：当执行`enter`钩子出错时，会调用上一个状态的`resume`来尝试恢复和消除`leave`产生的副作用。
-### 实现原理
+## 实现原理
 状态转换钩子是在调用`transition`方法转换状态时被调用的函数。`transition`方法并不是直接调用这些定义的钩子函数的，而是通过`emitAsync`来触发事件转换事件，然后钩子函数订阅事件。<br />假设当前状态是`A`，当调用`transition("B")`方法时将发生：
 
 - 先调用`canTransition("A","B")`方法来判断能否从`A`转换到`B`状态，如果`canTransition`返回`false`，则代表不允许从`A`转换到`B`状态，将触发`TransitionError`错误。
@@ -447,7 +447,7 @@ await fs.transition("Disconnecting")  // 转换失败
 - 如果成功进入`B`状态，则会`emitAsync("B/done")`事件。如果`B/enter`返回`false`或者`触发错误`而导致无法进入`B`状态，而会触发emitAsync("A/resume")
 
 可以看出，状态机会在转换过程中，视情况触发`<State>/leave`、`<State>/enter`、`<State>/resume`、`<State>/done`等事件。因此，开发者可以通过`fsm.on(<State>/leave,callback)`、`fsm.on(<State>/enter,callback)`、`fsm.on(<State>/resume,callback)`、`fsm.on(<State>/done,callback)`来订阅转换钩子。
-### 声明钩子
+## 声明钩子
 可以通过以下方法来声明拦截钩子，拦截钩子可以是同步函数，也可以是异步函数。
 
 - **构造时传入**
@@ -508,7 +508,7 @@ fsm.on("Connected/leave",{from,to})=>{....})
 fsm.on("Connected/done",{from,to})=>{....})
 fsm.on("Connected/resume",{from,to,error})=>{....})
 ```
-### 钩子事件参数
+## 钩子事件参数
 
 - **enter事件参数**
 
@@ -524,7 +524,7 @@ fsm.on("Connected/resume",{from,to,error})=>{....})
    1. `from`：上一个状态
    2. `to`：下一个状态
    3. `params`：转换时传入的参数
-### 阻止转换过程
+## 阻止转换过程
 状态转换除了受`state.next`约束外，还可以通过状态转换钩子来**拦截**约束。状态转换钩子函数在状态转换其间调用，可以**对转换行为进行拦截**并作出相应的**拦截处理**。
 
 - **通过返回**`**false**`**来明确阻止转换过程。**
@@ -548,6 +548,7 @@ class MyStateMachine extends FlexStateMachine{
 ```
 
 - **通过触发**`**SideEffectTransitionError**`**来阻止转换到错误状态**
+
 ```typescript
 class MyStateMachine extends FlexStateMachine{
     async onInitialLeave({from,to}){
@@ -556,8 +557,10 @@ class MyStateMachine extends FlexStateMachine{
     } 
 }    
 ```
+
 当钩子函数触发`SideEffectTransitionError`时，将使状态机转换到`ERROR`状态。`ERROR`状态是一个FINAL状态，代表状态机处于最终状态。后续只能通过`reset`方法来重置状态机。
 ## 错误处理
+
 转换状态或者执行动作均可能会出错，出错一般就代表着产生了副作用，最主要的表现形式就是上下文数据被污染了，必须提供正确的错误处理才可以确保状态机的工作正常。当状态机发生错误时，常见的处理方式是：
 
 - 如果没有产生严重的副作用，则一般会进行重试恢复
@@ -658,6 +661,7 @@ class MyStateMachine extends FlexStateMachine{
 ```
 ## 转换事件
 状态转换过程中的钩子事件订阅：
+
 ```typescript
 let fsm = new FlexStateMachine({....})
 // 在状态机上订阅
@@ -672,27 +676,31 @@ fsm.states.[状态名称].on("done",callback)
 fsm.states.[状态名称].on("resume",callback)
 
 ```
+
 # 动作
-动作用来执行某个副作用并导致状态发生变化，属于主动进行状态转换。
+
+动作(`action`)用来执行某个副作用并导致状态发生变化，属于主动进行状态转换。
+
+> 最佳实践：通过执行动作来触发状态变化，而不是直接修改状态！
+
 ## 动作参数
+
 动作可以通过多种方式进行定义，动作参数如下：
+
 ```typescript
  {
-    name         : "<动作名称>",								  // 指定唯一的动作名称
-    alias        : "<动作别名>",									// 动作别名，当在实例中注入同名的方法时，如果指定别名，则使用该别名
+    name         : "<动作名称>",			        // 指定唯一的动作名称
+    alias        : "<动作别名>",					// 动作别名，当在实例中注入同名的方法时，如果指定别名，则使用该别名
     when         : [<状态>,...,<状态>],       		// 指定该动作仅在当前状态是when中的一个时才允许执行动作
-    pending      : "<状态>",                			// 开始执行动作前切换到pending状态
-    execute      : async (param)=>{.....}        // 动作执行函数，具体干活的   
-    resolved     : "<状态>",                			// 执行成功后切换到resolved状态
-    rejected     : "<状态>",                			// 执行失败后切换到rejected状态
-    finally      : "<状态>",                			// 无论执行成功或失败均切换到finally状态
-    timeout      : 0,                						 // 指定动作执行超时时间
-    retryCount   : 0,                   				 // 指定动作执行失败时的重试次数
-    retryInterval: 0                    				 // 指定动作执行失败时的重试间隔
-    debounce     : 0,                            // 防抖动
-    throttle     : 0                             // 节流
+    pending      : "<状态>",                		// 开始执行动作前切换到pending状态
+    execute      : async (param)=>{.....}           // 动作执行函数，具体干活的   
+    resolved     : "<状态>",                		// 执行成功后切换到resolved状态
+    rejected     : "<状态>",                		// 执行失败后切换到rejected状态
+    finally      : "<状态>",                		// 无论执行成功或失败均切换到finally状态
+
 }
 ```
+
 其中`pending/resolved/rejected/finally`四个参数代表了动作执行阶段的状态值。除了直接指定状态名称外，还可以是返回状态的函数。
 ```typescript
  {
@@ -723,6 +731,8 @@ fsm.states.[状态名称].on("resume",callback)
     timeout      : 0,                						 // 指定动作执行超时时间
 }
 ```
+## 声明动作
+
 动作可以通过三种方式进行定义：
 ### 在构建参数中传入
 ```typescript
@@ -881,7 +891,7 @@ await tcp.actions.connect()   // 不应该状态转换钩子中调用
 也就是说动作执行取决于外部模块（主要是通过事件触发进行反馈），就像tcp客户端中，当调用`connect`或`disconnect`方法时，是否成功不仅取决于本地代码，还取决于服务器的行为；此种情况下，就没有必须指定`resolved/rejected/finally`参数。
 ## 错误处理
 当动作函数执行完毕后，状态机将根据执行结果转换到`resolved/rejected/finally`指定的状态。<br />如果指定的状态是无效的，或者转换失败，则状态机将转换到`ERROR`状态。这种情况下，就只能通过`reset`方法来重置整个状态机。
-## 子状态
+# 子状态
 子状态指每个状态内部还具有自己的状态，在实际项目中是比较常见的，比较快速入门例子中当进行连接状态后：
 
 - 客户端需要在准备认证、已认证、认证成功、认证失败等状态中切换，相当于Connected内部具有一个独立的子状态机。
@@ -892,6 +902,7 @@ await tcp.actions.connect()   // 不应该状态转换钩子中调用
 - **调用状态的**`**createScope**`**方法**
 
 每个状态均可以调用`createScope`方法来创建独立的状态机，`createScope`方法返回是一个`FlexStateMachine`实例，称为**子状态机**。
+
 ```typescript
 let tcp = new TcpClient({})
 
@@ -903,14 +914,15 @@ let connectedFsm = tcp.states.Connected.createScope({
 })
 tcp.states.Connected.scope === 指向的就是创建的状态机实例
 ```
-### 在配置状态时声明
+## 配置子状态
+
 ```typescript
 class TcpClient extends FlexStateMachine{
   static states = {
     Connected:{
       scope:{
           Unauthenticated : {value:0,title:"未认证",initial:true,next:["Authenticating"]},
-          Authenticating  : {value:1,title:"正在认证",next:["Authenticated]}
+          Authenticating  : {value:1,title:"正在认证",next:["Authenticated"]}
           Authenticated   : {value:2,title:"已认证",next:["Unauthenticated"]},
       }
     },
@@ -930,7 +942,7 @@ class TcpClient extends FlexStateMachine{
     Connected:{
       scope:{
           Unauthenticated : {value:0,title:"未认证",initial:true,next:["Authenticating"]},
-          Authenticating  : {value:1,title:"正在认证",next:["Authenticated]}
+          Authenticating  : {value:1,title:"正在认证",next:["Authenticated"]}
           Authenticated   : {value:2,title:"已认证",next:["Unauthenticated"]},
       }
     }  

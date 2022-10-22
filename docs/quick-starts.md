@@ -1,4 +1,5 @@
 # 快速入门
+
 下面我们以开发基于`nodejs/net.socket`的TCP客户端为例来说明`FlexStateMachine`的使用。
 
 作为例子，我们为`TCPClient`设计以下几种状态：
@@ -15,6 +16,16 @@
 
 ![](./images/tcpclient_states.png)
 
+
+# 安装
+
+```typescript
+
+> pnpm add flexstate
+> npm install flexstate
+> yarn add flexstate
+
+```
 # 第一步：构建状态机
 
 推荐直接继承`FlexStateMachine`来创建一个`TCPClient`实例，该种方式更加简单易用。
