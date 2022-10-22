@@ -1,6 +1,6 @@
 <!-- ![logo](_media/icon.svg) -->
 
-# FlexStae
+# FlexState
 
 > 一款基于`TypeScript`开发的强大易用的有限状态机
 
