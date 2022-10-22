@@ -1,11 +1,11 @@
 <!-- ![logo](_media/icon.svg) -->
 
-# FlexDecorators
+# FlexStae
 
-> 提供功能与包装逻辑分离的动态装饰器开发实践
+> 一款基于`TypeScript`开发的强大易用的有限状态机
 
-[GitHub](https://gitee.com/zhangfisher/flex-decorators)
-[Get Started](./README.md)
+[GitHub](https://gitee.com/zhangfisher/flexstate)
+[Get Started](./README)
 
 
 ![color](#f0f0f0)

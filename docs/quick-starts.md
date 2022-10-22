@@ -8,6 +8,7 @@
 - `Connected`：已连接，当触发connect事件后。
 - `Disconnecting`：正在断开，当调用destory或end方法后，end/close事件触发前。
 - `Disconnected`：已断开，当触发end/close事件后。
+- `AlwaysDisconnected`：主动断开。
 - `Error`：当触发error事件时。
 
 **`TCPClient`的状态图如下：**
@@ -22,7 +23,7 @@
 
 import { state, FlexStateMachine } from "flexstate"
 
-class TcpClient extends FlexStateMachineMachine{
+class TcpClient extends FlexStateMachine{
   // 定义状态
     static states = { 
         Initial : { value:0, title:"已初始化", next:["Connecting","Connected","Disconnected"],initial:true},
@@ -152,7 +153,6 @@ tcp.connect()
 - 如果执行`socket.connect({options}) `出错，可以通过`@state({retry,retryCount})`来启用重试逻辑。需要注意的是 调用`connect`成功仅仅代表该方法在调用时没有出错，并不代表已经连接成功。是否连接成功需要由`socket/connect`事件来触发确认。
 - 在上述中，并没有显式指定当连接成功时的状态，原因是因为`connect`方法是一个异步方法，是否连接成功或失败是通过事件回调的方式转换状态的。在初始化阶段，我们订阅了`close`、`end`等回调。
    - `this._socket.on("close",()=>this.transition(this.DISCONNECTED))`
-   - `this._socket.on("end",()=>this.transition(this.DISCONNECTED))`
    - ` this._socket.on("error",()=>this.transition(this.ERROR))`
 
 当执行`socket.connect`方法后，如果接收到`close`/`end`/`error`则会转换到对应的`DISCONNECTED`、`ERROR`状态。
@@ -269,8 +269,11 @@ class TcpClient extends FlexStateMachine{
 # 第六步：管理连接认证
 
 当tcp连接成功后，一般服务器会要求对客户连接进行认证才允许进行使用，而认证操作（`login/logout`）是一个耗时的异步操作，同样需要进行状态管理。当进入`Connected`状态后，状态将在`未认证`、`正在认证`、`已认证`三个状态间进行转换，对状态图更新如下：
-![](https://cdn.nlark.com/yuque/0/2022/jpeg/23111944/1657523671471-fc9a13b9-ec1e-48c3-959c-d64252810a96.jpeg)
+
+![](./images/state_graph.png)
+
 由上图可以看到，有必要引入`子状态`概念来管理连接后的状态。
+
 ```typescript
 class TcpClient extends FlexStateMachine{
     static states = { 
@@ -282,7 +285,7 @@ class TcpClient extends FlexStateMachine{
        scope:{
            states:{
               Unauthenticated : {value:0,title:"未认证",initial:true,next:["Authenticating"]},
-              Authenticating  : {value:1,title:"正在认证",next:["Authenticated]}
+              Authenticating  : {value:1,title:"正在认证",next:["Authenticated"]}
               Authenticated   : {value:2,title:"已认证",next:["Unauthenticated"]},
           }
        }
