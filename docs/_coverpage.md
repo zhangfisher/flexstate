@@ -5,7 +5,7 @@
 > 一款基于`TypeScript`开发的强大易用的有限状态机
 
 [GitHub](https://gitee.com/zhangfisher/flexstate)
-[Get Started](./README)
+[Get Started](/readme)
 
 
 ![color](#f0f0f0)
