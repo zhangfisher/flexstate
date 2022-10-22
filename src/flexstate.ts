@@ -22,8 +22,11 @@ import {
 } from "./errors"
 import merge from "lodash/merge"
 import isEmpty from "lodash/isEmpty"
-import { getDecorators } from "flex-decorators";
+import { getDecorators,DecoratedMethodList } from "flex-decorators";
 import { DefaultStateParams, ERROR_STATE, NULL_STATE } from "./consts";
+
+
+
 export type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'finally' 
 
 /**
@@ -35,7 +38,7 @@ export interface FlexStateAction{
     alias?        : string,  									// 动作别名，当在实例中注入同名的方法时，如果指定别名，则使用该别名
     injectMethod? : boolean,                                    // 是否上下文对象中注入同名的方法
     // 指定该动作仅在当前状态是when中的一个时才允许执行动作
-    when?         : Array<string> | ((params:Object,current:FlexState)=>Array<string>),       		                
+    when?         : string | Array<string> | ((params:Object,current:FlexState)=>Array<string>),       		                
     pending?      : string | Function,                			// 开始执行动作前切换到pending状态
     resolved?     : string | Function,                			// 执行成功后切换到resolved状态
     rejected?     : string | Function,                			// 执行失败后切换到rejected状态
@@ -56,10 +59,10 @@ export type FlexStateActionDecoratorOptions = Omit<FlexStateAction,"name" | "exe
  * 状态机enter/leave/done/resume回调参数
  */
 export interface FlexStateTransitionHookArguments{
-    from?         : string,
-    to?           : string,
-    retryCount?   : number                              // 重试次数,
-    retry?(interval:number):void,                       // 马上执行重试
+    from          : string
+    to            : string
+    retryCount    : number                                                  // 重试次数,
+    retry         : Function | ((interval?:number)=>void)                   // 马上执行重试
     [key : string]:any    
 }
 
@@ -577,6 +580,19 @@ export class FlexStateMachine extends LiteEventEmitter{
     /**************************** 动作 *****************************/
 
     /**
+     * 扫描当前context实例中所有被<@state>装饰的状态动作
+     * @returns 
+     */
+    private _getDecoratoredActions(){       
+        // decoratedActions={method1:[{参数}]}  
+        let decoratedActions = getDecorators(this.context,"flexState") 
+        Object.entries(decoratedActions).forEach(([methodName,[action]])=>{            
+            (action as FlexStateAction).execute = this.context[methodName]
+            decoratedActions[methodName] = action
+        })
+        return decoratedActions
+    }
+    /**
      * 注册动作
      * 扫描当前实例中所有被<@state>装饰的状态动作
      * 
@@ -605,12 +621,14 @@ export class FlexStateMachine extends LiteEventEmitter{
     private _registerActions() {
         this.#actions       = {}        
         // 获取装饰器装饰的动作函数       
-        // decoratedActions={method1:[{参数},{参数}]}
-        let decoratedActions = getDecorators(this.context,"flexState") 
+        // decoratedActions={method1:{参数}}
+        let decoratedActions = this._getDecoratoredActions()
+        // actions ={<动作名称>:{..动作参数...}}
         let actions = Object.assign({},decoratedActions,this.options.actions)
-        for (let [name, [action]] of Object.entries(actions)) {
+        for (let [name, action] of Object.entries(actions)) {
             try{
-                action.name = name
+                if(Array.isArray(action)) action = action[0]
+                if(!action.name) action.name = name
                 this.register(action)
             }catch(e:any){
                 console.error("注册异步状态机动作{}出错:{}",[name,e.message])
@@ -634,7 +652,7 @@ export class FlexStateMachine extends LiteEventEmitter{
         if (typeof (action.execute) != "function") {
             throw new StateMachineError(`未定义状态动作函数${name}`)
         }
-        if(name in this.#actions){
+        if(name && (name in this.#actions)){
             throw new StateMachineError(`状态机动作${name}已存在,不能重复注册`)
         }  
 
@@ -694,7 +712,7 @@ export class FlexStateMachine extends LiteEventEmitter{
                 // 1. 判断动作执行的前置状态: 仅在当前状态==when指定的状态或者当前状态=null时才允许执行
                 let whenState =flexStringArrayArgument(action.when,this.context,oldStateName)
                 // 如果当前状态是NULL,则when参数不起作用。NULL状态可以转换至任意状态
-                if(oldStateName!==null && whenState.length>0 &&  !whenState.includes(oldStateName)){
+                if(oldStateName!==NULL_STATE.name && whenState.length>0 &&  !whenState.includes(oldStateName)){
                     throw new TransitionError(`动作<${action.name}>只能在状态<${this.current.name}>下才允许执行,当前状态是<${whenState}>`)
                 }                    
                 // 2. 转换到pending状态: 如果指定了pending，则转换至该状态
@@ -704,7 +722,7 @@ export class FlexStateMachine extends LiteEventEmitter{
                     isPending = true                 
                 }                
                 // 3. 执行动作函数
-                result = await action.execute.call(this.context,...args)                          
+                result = await action.execute.apply(this.context,args)                          
                 // 4. 成功执行后的状态                    
                 finalState = flexStringArgument(action.resolved,this.context,result)
                 
@@ -749,7 +767,7 @@ export class FlexStateMachine extends LiteEventEmitter{
                     //   - 如果曾经切换到pending状态并且执行出错，则需要恢复回退到原始状态
                     //   - 如果未指定有效的pending参数或者无法切换至pending状态，保持原始状态不变
                     if(isPending && hasError){
-                        this._currentState = this.getState(oldStateName)
+                        this.#currentState = this.getState(oldStateName)
                     }
                 }
             }
@@ -776,6 +794,7 @@ export class FlexStateMachine extends LiteEventEmitter{
      */
      register(action:FlexStateAction) {
         this._normalizeAction(action)
+        if(!action.name) throw new TypeError("需要为动作指定一个名称")
         // 包装动作函数
         const fn = this._createActionExecutor(action)
         this.#actions[action.name] = fn.bind(this.context)
@@ -878,7 +897,7 @@ export class FlexStateMachine extends LiteEventEmitter{
             this._safeEmit(FlexStateTransitionEvents.BEGIN, {event:"BEGIN",...transitionInfo})
 
             // 3. 进入next前，先离开当前状态： 当前状态可以通过触发Error来阻止状态切换
-            if(currentState.name!=null){
+            if(currentState.name!=NULL_STATE.name){
                 const leaveResult = await this._emitStateHookCallback(LeaveStateEvent(currentState.name) , { ...transitionInfo })
                 if(leaveResult.error){     
                     this._safeEmit(FlexStateTransitionEvents.ERROR, {error:leaveResult.error,...transitionInfo})
@@ -925,6 +944,7 @@ export class FlexStateMachine extends LiteEventEmitter{
         }
         return this
     } 
+    
     private _addHistory(stateName:string){
         if(this.options.history>0){
             this.history.push([Date.now(),stateName]) 
@@ -1006,7 +1026,7 @@ export class FlexStateMachine extends LiteEventEmitter{
         toState = this.getState(toState)
 
         // 如果当前状态是NULL, 则只能转换到Initial状态
-        if(fromState.name==null && toState.name!=this.initial.name){
+        if(fromState.name==NULL_STATE.name && toState.name!=this.initial.name){
             return false
         }
         // 如果已经是最终状态了，则不允许转换到任何状态

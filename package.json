@@ -21,7 +21,7 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "flex-decorators": "file:.yalc\\flex-decorators",
+    "flex-decorators": "file:.yalc/flex-decorators",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13"
   }

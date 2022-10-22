@@ -7,7 +7,7 @@ specifiers:
   '@types/lodash': ^4.14.186
   '@vitest/ui': ^0.24.3
   babel-jest: ^27.0.1
-  flex-decorators: file:.yalc\flex-decorators
+  flex-decorators: file:.yalc/flex-decorators
   lodash: ^4.17.21
   reflect-metadata: ^0.1.13
   tsup: ^6.3.0

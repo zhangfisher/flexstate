@@ -353,7 +353,7 @@ describe("状态转换",()=>{
         await fsm.transition("C")
 
         // 生成状态从from切换到to应该触发的事件名称数组
-        const getTransitionEvents = (from:string, to:string) => {
+        const getTransitionEvents = (from:string | undefined, to:string) => {
             let events = []
             if (from) events.push(...[ `${from}.Leave`,`on${from}Leave`, `${from}/Leave`])
             events.push(...[
@@ -363,7 +363,7 @@ describe("状态转换",()=>{
             return events
         }
         const expectEvents = [
-            ...getTransitionEvents('NULL', "A"),
+            ...getTransitionEvents(undefined, "A"),
             ...getTransitionEvents("A", "B"),
             ...getTransitionEvents("B", "C")
         ]
@@ -491,12 +491,12 @@ describe("状态转换",()=>{
         }
         expect(actualEvents).toStrictEqual(expectEvents)
      
-    },50000)   
+    })   
 
-    test("连接出错时自动重连",(done) => {
+    test("连接出错时自动重连",(done:Function) => {
         let count = 10,  reConnectCount = 0
-        const actualEvents = []
-        const expectEvents = [
+        const actualEvents:string[] = []
+        const expectEvents:string[]  = [
             "Initial/enter","Initial/done",
             "Initial/leave","Connecting/enter","Connecting/done","Connecting/leave","Disconnected/enter","Disconnected/done","---"
         ] 
@@ -522,9 +522,9 @@ describe("状态转换",()=>{
             }
         })    
         
-        fsm.on("*/leave",({from,to})=>actualEvents.push(`${from}/leave`)) 
-        fsm.on("*/enter", ({from,to}) => actualEvents.push(`${to}/enter`))                
-        fsm.on("*/done",({params,from,to})=>{
+        fsm.on("*/leave",({from,to}:{from:string,to:string})=>actualEvents.push(`${from}/leave`)) 
+        fsm.on("*/enter", ({from,to}:{from:string,to:string}) => actualEvents.push(`${to}/enter`))                
+        fsm.on("*/done",({params,from,to}:{params:any,from:string,to:string})=>{
             actualEvents.push(`${to}/done`)
             if(to==="Disconnected") {
                 actualEvents.push("---")
@@ -544,7 +544,7 @@ describe("状态转换",()=>{
             fsm.connect()
         })
          
-    },500000)
+    })
     
 
 
@@ -616,8 +616,8 @@ describe("执行动作",()=>{
     })
 
     test("执行连接动作失败回退到原始状态",async ()=>{
-        const actualEvents = []  
-        const expectEvents = [  
+        const actualEvents:string[] = []  
+        const expectEvents:string[] = [  
             "Initial",
             "Connecting",              
             "Initial"
@@ -651,8 +651,8 @@ describe("执行动作",()=>{
         }
     }) 
     test("执行连接动作的参数均采用函数",async ()=>{
-        const actualEvents = []  
-        const expectEvents = [  
+        const actualEvents:string[] = []  
+        const expectEvents:string[] = [  
             "Initial",
             "Connecting","Connected",               // 第一次连接时
             "Initial",                              // 重置
@@ -667,11 +667,11 @@ describe("执行动作",()=>{
                 connect:{
                     when    : ["Initial"],
                     pending : ()=>"Connecting",
-                    resolved: (result)=>{
+                    resolved: (result:any)=>{
                         expect(result).toBe(1)
                         return "Connected"
                     },
-                    rejected: (e)=>{
+                    rejected: (e:any)=>{
                         expect(e).toBeInstanceOf(Error)
                         return "Disconnected"
                     },
@@ -701,8 +701,8 @@ describe("执行动作",()=>{
         }
     })
     test("执行连接动作的When参数不匹配时产生错误",async ()=>{
-        const actualEvents = []  
-        const expectEvents = ["Initial"]
+        const actualEvents:string[] = []  
+        const expectEvents:string[] = ["Initial"]
         const tcp = new TcpClientStateMachine({ 
             throwActionError:true,
             onTransitionEnd:({from,to}) => {
@@ -734,8 +734,8 @@ describe("执行动作",()=>{
     })
 
     test("通过装饰器声明动作",async ()=>{
-        const actualEvents = []  
-        const expectEvents = [  
+        const actualEvents:string[] = []  
+        const expectEvents:string[] = [  
             "Initial",
             "Connecting","Connected",               // 第一次连接时
             "Initial",                              // 重置
@@ -748,14 +748,14 @@ describe("执行动作",()=>{
                 resolved: "Connected",
                 rejected: "Disconnected",
             })
-            connect({host,port}={}) { 
+            connect({host,port}:{host:string,port:number}) { 
                 if(host===""){
                     throw new Error()
                 }else{
                     return 1
                 }
             }
-            onTransitionEnd({from,to}){
+            onTransitionEnd({from,to}:{from:string,to:string}){
                 actualEvents.push(to)
             }
         }
@@ -798,11 +798,11 @@ describe("执行动作",()=>{
                 retryCount   : 3,
                 retryInterval: 1
             })
-            async connect({host,port}={}) { 
+            async connect({host,port}:{host:string,port:number}) { 
                 retryCount++
                 await delay(10) 
             }
-            onTransitionEnd({from,to}){
+            onTransitionEnd({from,to}:{from:string,to:string}){
                 actualEvents.push(to)
             }
         }
@@ -825,8 +825,8 @@ describe("执行动作",()=>{
 describe("子状态",()=>{    
     
     test("转换到Connected子状态",async ()=>{ 
-        const actualEvents = []
-        const expectEvents = [
+        const actualEvents:string[] = []
+        const expectEvents:string[] = [
             "Initial","Connecting","Connected",
             "Connected/Authorizating","Connected/Authorizated","Connected/CancelAuthorizating","Connected/UnAuthorizated",
             "Disconnecting","Disconnected"
@@ -857,7 +857,7 @@ describe("子状态",()=>{
                 CancelAuthorizating:{value:3},            // 正在取消授权
                 UnAuthorizated:{value:4}                // 未授权
             },
-            onTransitionEnd:({from,to})=>actualEvents.push(`Connected/${to}`)
+            onTransitionEnd:({from,to}:{from:string,to:string})=>actualEvents.push(`Connected/${to}`)
         })         
         const startFn = vi.fn(),stopFn = vi.fn()
         ConnectedFSM.on("start",startFn)
@@ -886,8 +886,8 @@ describe("子状态",()=>{
 
 describe("错误处理", () => {
     test("离开A状态出错后,重试3后出错",async () => {
-        const actualEvents = []  
-        const expectEvents = []
+        const actualEvents:string[]= []  
+        const expectEvents :string[] = []
         let retryCountOfleaveB = 0 
         class CustomError extends Error {}
         const fsm = new FlexStateMachine({
@@ -895,7 +895,7 @@ describe("错误处理", () => {
                 A: { 
                     value: 1, 
                     initial: true,
-                    leave:({retry,retryCount})=>{
+                    leave:({retry,retryCount}:{retry:Function,retryCount:number})=>{
                         retryCountOfleaveB++
                         try{
                             throw new Error()
@@ -915,20 +915,20 @@ describe("错误处理", () => {
                 C:{value:3}
             },
             onTransitionEnd:({from,to}) => {
-                endStates.push(to)
+                actualEvents.push(to)
             }        
         })        
         await fsm.waitForInitial()  
         try{
             await fsm.transition("B")
-        }catch(e){
+        }catch(e:any){
             expect(e.message).toBe("LeaveBError")
             expect(retryCountOfleaveB).toBe(4)
         }
     })
     test("离开A状态进入B状态时出错,重试3后出错",async () => {
-        const actualEvents = []  
-        const expectEvents = []
+        const actualEvents:string[] = []  
+        const expectEvents:string[] = []
         let aEnterRetryCount = 0,resumeCount = 0
         class CustomError extends Error {}
         const fsm = new FlexStateMachine({
@@ -966,7 +966,7 @@ describe("错误处理", () => {
                 C:{value:3}
             },
             onTransitionEnd:({from,to}) => {
-                endStates.push(to)
+                actualEvents.push(to)
             }        
         })        
         const errorCallback = vi.fn()
@@ -976,7 +976,7 @@ describe("错误处理", () => {
         // 第一次转换失败：resume成功，所以保持在A状态
         try{
             await fsm.transition("B")
-        }catch(e){
+        }catch(e:any){
             expect(e.message).toBe("aEnterError")
             expect(fsm.current.name).toBe("A")
             expect(aEnterRetryCount).toBe(4)
@@ -984,7 +984,7 @@ describe("错误处理", () => {
         // 第二次转换失败：resume出错, 所以转换到ERROR状态
         try{
             await fsm.transition("B")
-        }catch(e){
+        }catch(e:any){
             expect(e.message).toBe("aEnterError")
             expect(fsm.current.name).toBe("ERROR")  
             expect(aEnterRetryCount).toBe(8)
