@@ -5,7 +5,6 @@
 
 
 import "reflect-metadata";
-import merge from "lodash/merge";
 
 /**
  *  延时指定的时间
@@ -17,18 +16,18 @@ export async function delay(t:number = 100):Promise<void> {
         setTimeout(resolve,t)
     })
 }
-/**
- *  延时指定的时间，当超时后会抛出TIMEOUT错误
- * @param t 
- * @returns 
- */
-export function delayRejected(t:number = 100):Promise<Error>{
-    return new Promise((resolve, reject) => {
-        setTimeout(() =>{
-            reject("TIMEOUT")
-        },t);
-    })
-}
+// /**
+//  *  延时指定的时间，当超时后会抛出TIMEOUT错误
+//  * @param t 
+//  * @returns 
+//  */
+// export function delayRejected(t:number = 100):Promise<Error>{
+//     return new Promise((resolve, reject) => {
+//         setTimeout(() =>{
+//             reject("TIMEOUT")
+//         },t);
+//     })
+// }
 
 /**
  * 
@@ -99,16 +98,16 @@ export function flexStringArrayArgument(param:any,...args:any[]){
  * @param {*} param 
  * @param  {...any} args 
  */
-export function flexObjectArgument(param:any,defaultValue:Object={},defaultKey:string){    
-    let results:{[ prop:string]:any } = {},params  = param 
-    if(typeof(params)==="function") params = params.call() 
-    if(typeof(params)==="object"){
-        if(defaultKey) results[defaultKey]= params
-    }else{
-        results = params
-    }     
-    return Object.assign({},defaultValue,results)
-}
+// export function flexObjectArgument(param:any,defaultValue:Object={},defaultKey:string){    
+//     let results:{[ prop:string]:any } = {},params  = param 
+//     if(typeof(params)==="function") params = params.call() 
+//     if(typeof(params)==="object"){
+//         if(defaultKey) results[defaultKey]= params
+//     }else{
+//         results = params
+//     }     
+//     return Object.assign({},defaultValue,results)
+// }
 
 // 判断对象是否是一个类
 export function isClass(cls:any):boolean{
@@ -157,7 +156,7 @@ export function isClass(cls:any):boolean{
  * @param fieldName
  * @param options
  */
-export function getClassStaticValue(instanceOrClass:object,fieldName:string,options:{merge?: number,default?:any}){
+export function getClassStaticValue(instanceOrClass:object,fieldName:string,options:{merge?: number,default?:any}={}){
     const opts = Object.assign({
         // 是否进行合并,0-代表不合并，也就是不会从原型链中读取，1-使用Object.assign合并,2-使用mergeDeepRigth合并
         // 对数组,0-不合并，1-合并数组,   2-合并且删除重复项
@@ -192,7 +191,7 @@ export function getClassStaticValue(instanceOrClass:object,fieldName:string,opti
     if(valueType===0){// Object
         mergedResults =  valueList.reduce((result,item)=>{
             if(isPlainObject(item)){        // 只能合并字典
-                return opts.merge ===1 ? Object.assign({},defaultValue,item,result) : merge({},defaultValue,item,result)
+                return opts.merge ===1 ? Object.assign({},defaultValue,item,result) : Object.assign({},defaultValue,item,result)
             }else{
                 return result
             }
@@ -212,66 +211,11 @@ export function getClassStaticValue(instanceOrClass:object,fieldName:string,opti
         if(isPlainObject(defaultValue)){
             mergedResults.forEach((value:any,index:number) =>{
                 if(isPlainObject(value)){
-                    mergedResults[index] = merge({},defaultValue,value)
+                    mergedResults[index] =  Object.assign({},defaultValue,value)
                 }
             })
         }
     }
     return mergedResults
 }
-
-
-export function getOwnMetadata(metadataKey: string, constructor: Object, propertyKey?: string | symbol): any {
-    const constructors = [ constructor, ...getSuperClasses(constructor) ];
-    let result: any[] = [];
-    for (let index = 0; index < constructors.length; index++) {
-        const c = constructors[constructors.length - index - 1];
-        let metadata: any[];
-        if (propertyKey) {
-            metadata = Reflect.getOwnMetadata(metadataKey, c, propertyKey);
-        } else {
-            metadata = Reflect.getOwnMetadata(metadataKey, c);
-        }
-
-        if (metadata) {
-            if (Array.isArray(metadata)) {
-                result = [ ...result, ...metadata ];
-            } else {
-                return [ metadata ];
-            }
-        }
-    }
-    return result;
-}
-
-
-/**
- * 获取所有父类
- */
-export function getSuperClasses(constructor: any): any[] {
-    const constructors = [];
-    let current = constructor;
-    while (Object.getPrototypeOf(current)) {
-        current = Object.getPrototypeOf(current);
-        constructors.push(current);
-    }
-    return constructors;
-}
-
-/**
- * 获取指定对象的所有包含原型链上的所有属性列表 * 
- * @param obj 
- * @returns 
- */
-export function getPropertyNames(obj: any) {
-    const propertyNames: string[] = [];
-    do {
-        propertyNames.push(...Object.getOwnPropertyNames(obj));
-        obj = Object.getPrototypeOf(obj);
-    } while (obj);
-    // get unique property names
-    return Array.from(new Set<string>(propertyNames));
-}
-
-
-
+ 
