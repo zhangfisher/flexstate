@@ -20,7 +20,7 @@ import {
     SideEffectTransitionError
 } from "./errors" 
 import { getDecorators } from "flex-decorators";
-import { DefaultStateParams, ERROR_STATE, NULL_STATE } from "./consts";
+import { DefaultStateParams, ERROR_STATE, IDLE_STATE } from "./consts";
 
 
 
@@ -102,7 +102,7 @@ export type FlexStateArgs = string | number | FlexState
 
 export type FlexStateMap = Record<string,NewFlexState> 
 
-export type NULL_STATE_TYPE = Pick<FlexState,'name' | 'value' | 'next' >
+export type IDLE_STATE_TYPE = Pick<FlexState,'name' | 'value' | 'next' >
 export type ERROR_STATE_TYPE = Pick<FlexState,'name' | 'value' | 'next' | 'final' >
 
 
@@ -181,9 +181,9 @@ export class FlexStateMachine extends LiteEventEmitter{
     static states : FlexStateMap = {  }
     static actions: FlexStateActionMap = {}
     states        : Record<string, FlexState>= {}
-    #initialState : FlexState = NULL_STATE as  FlexState                   // 初始状态
+    #initialState : FlexState = IDLE_STATE as  FlexState                   // 初始状态
     #finalStates  : Array<string> = []                                     // 保存最终状态名称
-    #currentState : FlexState = NULL_STATE  as  FlexState                  // 当前状态
+    #currentState : FlexState = IDLE_STATE  as  FlexState                  // 当前状态
     #transitioning: boolean = false                                        // 是否正在转换中
     #running      : boolean = false                                        // 是否处于运行状态
     #name         : string  = ''                                                // 状态机名称
@@ -215,7 +215,7 @@ export class FlexStateMachine extends LiteEventEmitter{
 
     /**************************** 公开属性 *****************************/
     get name(): string {return this.#name}    
-    get context() { return this.options.context }                          // 状态机上下文实例
+    get context() { return this.options.context || this }                          // 状态机上下文实例
     get parent() { return this.options.parent }                            // 父状态
     get scope() { return this.options.scope }                              // 父状态所在的状态机实例
     get running() { return this.#running }                                  // 当前作用域  
@@ -265,7 +265,9 @@ export class FlexStateMachine extends LiteEventEmitter{
             state.name = name
             let addedState:FlexState = this._add(state);          
             // 将状态值映射为实例的属性，可以直接以大写方式访问，如fsm.CONNECTED===state.value  
-            (this as any)[name.toUpperCase()] = addedState.value;            
+            if(this.options.injectStateValue){
+                (this.context as any)[name.toUpperCase()] = addedState.value;            
+            }
             if(addedState.initial) this.#initialState = addedState
             if(addedState.final) this.#finalStates.push(addedState.name)
         }                  
@@ -275,7 +277,11 @@ export class FlexStateMachine extends LiteEventEmitter{
         }   
         // 自动添加一个错误状态                
         this.states["ERROR"] = Object.assign({},ERROR_STATE) as FlexState;
-        (this as any)["ERROR"] = ERROR_STATE.value
+        if(this.options.injectStateValue) (this.context as any)["ERROR"] = ERROR_STATE.value
+        // 自动添加一个IDLE状态
+        this.states["IDLE"] = Object.assign({},IDLE_STATE) as FlexState;
+        if(this.options.injectStateValue) (this.context as any)["IDLE"] = IDLE_STATE.value
+
     } 
     /**************************** 状态机管理 *****************************/
     /**
@@ -305,7 +311,7 @@ export class FlexStateMachine extends LiteEventEmitter{
     }
     private _stop(e?:any){
         if(this.#transitioning) this.emit(CANCEL_TRANSITION)
-        this.#currentState = NULL_STATE as FlexState
+        this.#currentState = IDLE_STATE as FlexState
         this.#running = false
         this._emitStateMachineEvent(FlexStateEvents.STOP,e)
     }
@@ -322,7 +328,7 @@ export class FlexStateMachine extends LiteEventEmitter{
      * 
      * 重置操作：
      *  - 取消正在进行的状态切换事件回调
-     *  - 当前状态置为NULL_STATE
+     *  - 当前状态置为IDLE_STATE
      * 
      */
     async reset() {
@@ -715,8 +721,8 @@ export class FlexStateMachine extends LiteEventEmitter{
                 oldStateName = this.current.name
                 // 1. 判断动作执行的前置状态: 仅在当前状态==when指定的状态或者当前状态=null时才允许执行
                 let whenState =flexStringArrayArgument(action.when,this.context,oldStateName)
-                // 如果当前状态是NULL,则when参数不起作用。NULL状态可以转换至任意状态
-                if(oldStateName!==NULL_STATE.name && whenState.length>0 &&  !whenState.includes(oldStateName)){
+                // 如果当前状态是IDLE,则when参数不起作用。IDLE状态可以转换至任意状态
+                if(oldStateName!==IDLE_STATE.name && whenState.length>0 &&  !whenState.includes(oldStateName)){
                     throw new TransitionError(`动作<${action.name}>只能在状态<${this.current.name}>下才允许执行,当前状态是<${whenState}>`)
                 }                    
                 // 2. 转换到pending状态: 如果指定了pending，则转换至该状态
@@ -904,7 +910,7 @@ export class FlexStateMachine extends LiteEventEmitter{
             this._safeEmitEvent(FlexStateTransitionEvents.BEGIN, {event:"BEGIN",...transitionInfo})
 
             // 3. 进入next前，先离开当前状态： 当前状态可以通过触发Error来阻止状态切换
-            if(currentState.name!=NULL_STATE.name){
+            if(currentState.name!=IDLE_STATE.name){
                 const leaveResult = await this._emitStateHookCallback(LeaveStateEvent(currentState.name) , { ...transitionInfo })
                 if(leaveResult.error){     
                     this._safeEmitEvent(FlexStateTransitionEvents.ERROR, {error:leaveResult.error,...transitionInfo})
@@ -1032,8 +1038,8 @@ export class FlexStateMachine extends LiteEventEmitter{
         // 目标状态
         toState = this.getState(toState)
 
-        // 如果当前状态是NULL, 则只能转换到Initial状态
-        if(fromState.name==NULL_STATE.name && toState.name!=this.initial.name){
+        // 如果当前状态是IDLE, 则只能转换到Initial状态
+        if(fromState.name==IDLE_STATE.name && toState.name!=this.initial.name){
             return false
         }
         // 如果已经是最终状态了，则不允许转换到任何状态

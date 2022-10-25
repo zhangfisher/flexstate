@@ -159,7 +159,7 @@ interface NewFlexState {
 declare type FlexState = Required<NewFlexState>;
 declare type FlexStateArgs = string | number | FlexState;
 declare type FlexStateMap = Record<string, NewFlexState>;
-declare type NULL_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next'>;
+declare type IDLE_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next'>;
 declare type ERROR_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next' | 'final'>;
 /**
  * 状态机事件
@@ -270,7 +270,7 @@ declare class FlexStateMachine extends LiteEventEmitter {
      *
      * 重置操作：
      *  - 取消正在进行的状态切换事件回调
-     *  - 当前状态置为NULL_STATE
+     *  - 当前状态置为IDLE_STATE
      *
      */
     reset(): Promise<void>;
@@ -554,7 +554,7 @@ declare class FlexStateMachine extends LiteEventEmitter {
     waitForInitial(): Promise<void>;
 }
 
-declare const NULL_STATE: NULL_STATE_TYPE;
+declare const IDLE_STATE: IDLE_STATE_TYPE;
 declare const ERROR_STATE: ERROR_STATE_TYPE;
 /**
  * 默认状态值
@@ -573,4 +573,4 @@ declare const DefaultStateParams: {
     resume: undefined;
 };
 
-export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, ERROR_STATE_TYPE, FinalStateError, FlexState, FlexStateAction, FlexStateActionCallback, FlexStateActionDecoratorOptions, FlexStateActionMap, FlexStateArgs, FlexStateDecoratorOptions, FlexStateEvents, FlexStateMachine, FlexStateMachineContext, FlexStateMap, FlexStateNext, FlexStateOptions, FlexStateTransitionEventArguments, FlexStateTransitionEvents, FlexStateTransitionHook, FlexStateTransitionHookArguments, FlexStateTransitionHookExt, FlexStateTransitionHooks, InvalidStateError, NULL_STATE, NULL_STATE_TYPE, NewFlexState, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitionHookTypes, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };
+export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, ERROR_STATE_TYPE, FinalStateError, FlexState, FlexStateAction, FlexStateActionCallback, FlexStateActionDecoratorOptions, FlexStateActionMap, FlexStateArgs, FlexStateDecoratorOptions, FlexStateEvents, FlexStateMachine, FlexStateMachineContext, FlexStateMap, FlexStateNext, FlexStateOptions, FlexStateTransitionEventArguments, FlexStateTransitionEvents, FlexStateTransitionHook, FlexStateTransitionHookArguments, FlexStateTransitionHookExt, FlexStateTransitionHooks, IDLE_STATE, IDLE_STATE_TYPE, InvalidStateError, NewFlexState, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitionHookTypes, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };

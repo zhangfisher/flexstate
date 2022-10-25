@@ -1,6 +1,6 @@
 {
   "name": "flexstate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Flexible, friendly and easy-to-use finite state machine",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",

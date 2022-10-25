@@ -172,8 +172,8 @@ var SideEffectTransitionError = class extends TransitionError {
 __name(SideEffectTransitionError, "SideEffectTransitionError");
 
 // src/consts.ts
-var NULL_STATE = {
-  name: "NULL",
+var IDLE_STATE = {
+  name: "IDLE",
   value: null,
   next: "*"
 };
@@ -232,9 +232,9 @@ var _FlexStateMachine = class extends LiteEventEmitter {
       history: 0
     }, options));
     __publicField(this, "states", {});
-    __privateAdd(this, _initialState, NULL_STATE);
+    __privateAdd(this, _initialState, IDLE_STATE);
     __privateAdd(this, _finalStates, []);
-    __privateAdd(this, _currentState, NULL_STATE);
+    __privateAdd(this, _currentState, IDLE_STATE);
     __privateAdd(this, _transitioning, false);
     __privateAdd(this, _running, false);
     __privateAdd(this, _name, "");
@@ -255,7 +255,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
     return __privateGet(this, _name);
   }
   get context() {
-    return this.options.context;
+    return this.options.context || this;
   }
   get parent() {
     return this.options.parent;
@@ -303,7 +303,9 @@ var _FlexStateMachine = class extends LiteEventEmitter {
     for (let [name, state2] of Object.entries(definedStates)) {
       state2.name = name;
       let addedState = this._add(state2);
-      this[name.toUpperCase()] = addedState.value;
+      if (this.options.injectStateValue) {
+        this.context[name.toUpperCase()] = addedState.value;
+      }
       if (addedState.initial)
         __privateSet(this, _initialState, addedState);
       if (addedState.final)
@@ -313,7 +315,11 @@ var _FlexStateMachine = class extends LiteEventEmitter {
       __privateSet(this, _initialState, this.states[Object.keys(this.states)[0]]);
     }
     this.states["ERROR"] = Object.assign({}, ERROR_STATE);
-    this["ERROR"] = ERROR_STATE.value;
+    if (this.options.injectStateValue)
+      this.context["ERROR"] = ERROR_STATE.value;
+    this.states["IDLE"] = Object.assign({}, IDLE_STATE);
+    if (this.options.injectStateValue)
+      this.context["IDLE"] = IDLE_STATE.value;
   }
   _emitStateMachineEvent(event, ...args) {
     try {
@@ -335,7 +341,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
   _stop(e) {
     if (__privateGet(this, _transitioning))
       this.emit(CANCEL_TRANSITION);
-    __privateSet(this, _currentState, NULL_STATE);
+    __privateSet(this, _currentState, IDLE_STATE);
     __privateSet(this, _running, false);
     this._emitStateMachineEvent(FlexStateEvents.STOP, e);
   }
@@ -605,7 +611,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
       try {
         oldStateName = this.current.name;
         let whenState = flexStringArrayArgument(action.when, this.context, oldStateName);
-        if (oldStateName !== NULL_STATE.name && whenState.length > 0 && !whenState.includes(oldStateName)) {
+        if (oldStateName !== IDLE_STATE.name && whenState.length > 0 && !whenState.includes(oldStateName)) {
           throw new TransitionError(`\u52A8\u4F5C<${action.name}>\u53EA\u80FD\u5728\u72B6\u6001<${this.current.name}>\u4E0B\u624D\u5141\u8BB8\u6267\u884C,\u5F53\u524D\u72B6\u6001\u662F<${whenState}>`);
         }
         pendingState = flexStringArgument(action.pending, this.context, result);
@@ -717,7 +723,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
         event: "BEGIN",
         ...transitionInfo
       });
-      if (currentState.name != NULL_STATE.name) {
+      if (currentState.name != IDLE_STATE.name) {
         const leaveResult = await this._emitStateHookCallback(LeaveStateEvent(currentState.name), {
           ...transitionInfo
         });
@@ -841,7 +847,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
       throw new TypeError("Error Param");
     }
     toState = this.getState(toState);
-    if (fromState.name == NULL_STATE.name && toState.name != this.initial.name) {
+    if (fromState.name == IDLE_STATE.name && toState.name != this.initial.name) {
       return false;
     }
     if (fromState.final) {
@@ -936,5 +942,5 @@ _conflictMethods = new WeakMap();
 __publicField(FlexStateMachine, "states", {});
 __publicField(FlexStateMachine, "actions", {});
 
-export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, FinalStateError, FlexStateEvents, FlexStateMachine, FlexStateTransitionEvents, InvalidStateError, NULL_STATE, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };
+export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, FinalStateError, FlexStateEvents, FlexStateMachine, FlexStateTransitionEvents, IDLE_STATE, InvalidStateError, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };
 //# sourceMappingURL=index.js.map

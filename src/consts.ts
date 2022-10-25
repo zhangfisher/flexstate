@@ -1,9 +1,9 @@
-import type { NULL_STATE_TYPE,ERROR_STATE_TYPE} from "./flexstate"
+import type { IDLE_STATE_TYPE,ERROR_STATE_TYPE} from "./flexstate"
 
 // 状态机未初始化时的特殊状态值
-export const NULL_STATE: NULL_STATE_TYPE = { name: 'NULL', value: null, next: "*" }
+export const IDLE_STATE: IDLE_STATE_TYPE = { name: 'IDLE', value: null, next: "*" }
 // 出错状态
-export const ERROR_STATE:ERROR_STATE_TYPE = { name: "ERROR", final: true, value: Number.MAX_SAFE_INTEGER, next: "*" }
+export const ERROR_STATE:ERROR_STATE_TYPE = { name: "ERROR", final: true, value: Number.MAX_SAFE_INTEGER, next: "*"}
 
 /**
  * 默认状态值
