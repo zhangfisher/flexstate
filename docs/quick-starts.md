@@ -7,8 +7,10 @@
 - `Connecting`：连接中，当调用Connect方法，触发connect事件前。
 - `Connected`：已连接，当触发connect事件后。
 - `Disconnecting`：正在断开，当调用destory或end方法后，end/close事件触发前。
-- `Disconnected`：已断开，当触发end/close事件后。
-- `Error`：当触发error事件时。
+- `Disconnected`：被动断开，当触发end/close事件后。
+- `AlwaysDisconnected`: 主动断开状态
+- `IDLE`: 自动添加的空闲状态，状态机未启动时
+- `ERROR`: 自动添加的错误状态,特殊的`FINAL`状态
 
 **`TCPClient`的状态图如下：**
 
@@ -30,7 +32,7 @@ class TcpClient extends FlexStateMachineMachine{
         Connected : { value:2, title:"已连接", next:["Disconnecting","Disconnected"] },
         Disconnecting : { value:3, title:"正在断开连接...", next:["Disconnected"] },
         Disconnected : {value:4, title:"已断开连接", next:["Connecting"]},
-        AlwaysDisconnected	: {value:5, title:"已手动断开连接", next:["Connecting"]}
+        AlwaysDisconnected	: {value:5, title:"已主动断开连接", next:["Connecting"]}
     }                   
 
     constructor(options:FlexStateOptions){
@@ -70,7 +72,7 @@ class TcpClient extends FlexStateMachineMachine{
 **说明：**
 
 - 以上我们创建了一个继承自`FlexStateMachine`来创建一个`TCPClient`实例
-- 并且定义了`Initial`、`Connecting`、`Connected`、`Disconnecting`、`Disconnected`、`AlwaysDisconnected`共六个状态以及状态之间的转换约束。同时，状态机还会自动添加一个`ERROR`和`NULL`状态。
+- 并且定义了`Initial`、`Connecting`、`Connected`、`Disconnecting`、`Disconnected`、`AlwaysDisconnected`共六个状态以及状态之间的转换约束。同时，状态机还会自动添加一个`ERROR`和`IDLE`状态。
 - 定义了`connect`和`disconnect`两个动作`action`，在这两个方法前添加`@state`代表了当执行这两个方法会导致状态变化。
 
 
@@ -107,13 +109,13 @@ class TcpClient extends FlexStateMachine{
 
 ```
 
-当`TCPClient`实例化，状态机处于`NULL`状态(`<tcp实例>.current.name=='NULL'`),然后状态机自动启动(`autoStart=true`)将转换至`Initial`状态（`initial`状态）。
+当`TCPClient`实例化，状态机处于`IDLE`状态(`<tcp实例>.current.name=='IDLE'`),然后状态机自动启动(`autoStart=true`)将转换至`Initial`状态（`initial`状态）。
 
 - 状态机转换至`Initial`状态前会调用`onInitialEnter`。我们可以在此方法中创建`TCP Socket`实例以及其他相关的初始化。
-- `onInitialEnter`成功执行完毕后，状态机的状态将转换至`Initial`。（`NULL`->`Initial`）
+- `onInitialEnter`成功执行完毕后，状态机的状态将转换至`Initial`。（`IDLE`->`Initial`）
 - 如果在`onInitialEnter`函数初始化失败或出错，则应该抛出错误。错误将导致状态机将无法转换至`Initial`状态，也就无法进行后续的所有操作了。一般在初始化失败时，会进行如下操作：
    - 进行重试操作，直至初始化成功（即成功创建好Socket并进行相应的事件绑定）。
-   - 反复重试多次失败后，也可能会放弃重试，`TCP Client`将无法切换到`Initial`状态，而是保持在`NULL`状态。
+   - 反复重试多次失败后，也可能会放弃重试，`TCP Client`将无法切换到`Initial`状态，而是保持在`IDLE`状态。
    - 当条件具备时，状态机需要重新运行（即调用`tcp.start()`来启动状态机），将重复上述过程。
    
 # 第三步：连接服务器
