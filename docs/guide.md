@@ -430,7 +430,7 @@ class MyStateMachine extends FlexStateMachine{
 
 ## 特殊状态
 ### IDLE
-状态机实例化后，还没有调用`start`方法前的特殊状态，代表状态机还没有开始运行。当调用`start`方法后，将转换至**转换到**`initial=true`的状态。并且`IDLE`状态没有相对应的钩子事件和转换事件，也就是说不会触发`onNullEnter/onNullLeave/onNull`这样的钩子函数。
+状态机实例化后，还没有调用`start`方法前的特殊状态，代表状态机还没有开始运行。当调用`start`方法后，将转换至**转换到**`initial=true`的状态。并且`IDLE`状态没有相对应的钩子事件和转换事件，也就是说不会触发`onIdleEnter/onIdleLeave/onIdle`这样的钩子函数。
 ### INITIAL
 当指定状态`initial=true`时代表这是一个初始状态，状态机有且只能有一个`initial=true`。如果没有指定则会自动取第一个状态为初始状态。
 ### FINAL
@@ -730,7 +730,7 @@ class MyStateMachine extends FlexStateMachine{
 
 ## 错误处理
 
-转换状态或者执行动作均可能会出错，出错一般就代表着产生了副作用，最主要的表现形式就是上下文数据被污染了，必须提供正确的错误处理才可以确保状态机的工作正常。当状态机发生错误时，常见的处理方式是：
+转换状态或者执行动作均可能会出错，出错有可能会产生了副作用，最主要的表现形式就是上下文数据被污染了，必须提供正确的错误处理才可以确保状态机的工作正常。当状态机发生错误时，常见的处理方式是：
 
 - 如果没有产生严重的副作用，则一般会进行重试恢复。
 - 如果产生难以消除的副作用，则应重置状态机。
@@ -756,8 +756,8 @@ class MyStateMachine extends FlexStateMachine{
 
 所有的钩子函数均传入`retry`和`retryCount`两个参数用来实现重试操作。当产生的副作用是可消除的时，可以由开发者来自行决定如何进行重试。
 
-- **retry(interval)**：重试函数，能指定重试间隔
-- **retryCount**：代表第几次重试
+- **`retry(interval)`** ：重试函数，能指定重试间隔
+- **`retryCount`** ：代表第几次重试
 
 ```typescript
 import {RetrySignal } from "FlexStateMachine"
@@ -779,7 +779,9 @@ class MyStateMachine extends FlexStateMachine{
 ```
 ### 触发转换错误 
 
-当执行钩子函数失败时，**取决于在哪一个阶段出错**，如果在`A/leave`出错，
+当执行钩子函数失败时，**取决于在哪一个阶段出错**,其处理方式是不同的
+
+#### 在`A/leave`出错
 
 - 确认不会产生副作用，则只要抛出错误，状态机将保持状态不变。
 - 如果确认会产生不可消除的副作用，则需要抛出`SideEffectTransitionError`，状态将转换到`ERROR`状态
@@ -804,6 +806,8 @@ class MyStateMachine extends FlexStateMachine{
 }   
 ```
 
+#### 在`B/enter`出错
+
 如果在`B/enter`阶段产生错误，则需要在`a/resume`回调中处理消除副作用。如果`a/resume`也抛出错误，则会转换到错误状态。
 
 ```typescript
@@ -820,7 +824,7 @@ class MyStateMachine extends FlexStateMachine{
 }
 
 ```
-由于在A->B的转换过程中会先执行`A/leave`，在其中可能会产生副作用。因此在B/enter出错时（即无法进入B状态），触发`A/resume`事件，开发者可以在`A/resume`钩子中来消除副作用。如果`A/resume`钩子函数中能成功消副作用，则状态机将保持在A状态；如果`A/resume`钩子函数触发了错误，则代表着无法消除副作用，因此状态机将转换到`ERROR`状态。
+由于在`A->B`的转换过程中会先执行`A/leave`，在其中可能会产生副作用。因此在`B/enter`出错时（即无法进入B状态），触发`A/resume`事件，开发者可以在`A/resume`钩子中来消除副作用。如果`A/resume`钩子函数中能成功消副作用，则状态机将保持在A状态；如果`A/resume`钩子函数触发了错误，则代表着无法消除副作用，因此状态机将转换到`ERROR`状态。
 
 ### 转换到ERROR状态
 
@@ -860,7 +864,7 @@ fsm.states.[状态名称].on("resume",callback)
 
 # 动作
 
-动作(`action`)用来执行某个副作用并导致状态发生变化，属于主动进行状态转换。
+动作(`action`)用来执行某个副作用并导致状态发生变化，属于**主动进行状态转换**。
 
 > **最佳实践：**通过执行动作来触发状态变化，而不是直接修改状态！
 
