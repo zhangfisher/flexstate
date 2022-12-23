@@ -97,7 +97,7 @@ declare class ResumeTransitionError extends TransitionError {
 declare class SideEffectTransitionError extends TransitionError {
 }
 
-declare type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'finally';
+type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'finally';
 /**
  *
  * 状态动作
@@ -114,11 +114,11 @@ interface FlexStateAction {
     execute(...args: any[]): void;
     [key: string]: any;
 }
-declare type FlexStateActionMap = Record<string, FlexStateAction>;
+type FlexStateActionMap = Record<string, FlexStateAction>;
 /**
  * 状态动作装饰器参数
  */
-declare type FlexStateActionDecoratorOptions = Omit<FlexStateAction, "name" | "execute">;
+type FlexStateActionDecoratorOptions = Omit<FlexStateAction, "name" | "execute">;
 interface FlexStateTransitionEventArguments {
     event?: 'CANCEL' | 'BEGIN' | 'END' | 'ERROR';
     from: string;
@@ -127,18 +127,18 @@ interface FlexStateTransitionEventArguments {
     params?: any;
     [key: string]: any;
 }
-declare type FlexStateTransitionHookArguments = Exclude<FlexStateTransitionEventArguments, 'event'> & {
+type FlexStateTransitionHookArguments = Exclude<FlexStateTransitionEventArguments, 'event'> & {
     retryCount: number;
     retry: Function | ((interval?: number) => void);
 };
 /**
  * 状态转换钩子函数签名
  */
-declare type FlexStateTransitionHook = ((args: FlexStateTransitionHookArguments) => Awaited<Promise<any>> | void) | undefined;
-declare type FlexStateTransitionHookExt = FlexStateTransitionHook | [FlexStateTransitionHook, {
+type FlexStateTransitionHook = ((args: FlexStateTransitionHookArguments) => Awaited<Promise<any>> | void) | undefined;
+type FlexStateTransitionHookExt = FlexStateTransitionHook | [FlexStateTransitionHook, {
     timeout: number;
 }];
-declare type FlexStateNext = string | Array<string> | (() => Array<string>);
+type FlexStateNext = string | Array<string> | (() => Array<string>);
 interface NewFlexState {
     name?: string;
     value: number | null;
@@ -156,11 +156,11 @@ interface NewFlexState {
 /**
  * 状态声明
  */
-declare type FlexState = Required<NewFlexState>;
-declare type FlexStateArgs = string | number | FlexState;
-declare type FlexStateMap = Record<string, NewFlexState>;
-declare type IDLE_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next'>;
-declare type ERROR_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next' | 'final'>;
+type FlexState = Required<NewFlexState>;
+type FlexStateArgs = string | number | FlexState;
+type FlexStateMap = Record<string, NewFlexState>;
+type IDLE_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next'>;
+type ERROR_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next' | 'final'>;
 /**
  * 状态机事件
  */
@@ -188,7 +188,7 @@ interface FlexStateTransitionHooks {
     onTransitionError?(params: FlexStateTransitionEventArguments): Awaited<Promise<any>>;
     onTransitionCancel?(params: FlexStateTransitionEventArguments): Awaited<Promise<any>>;
 }
-declare type TransitionHookTypes = keyof FlexStateTransitionHooks;
+type TransitionHookTypes = keyof FlexStateTransitionHooks;
 interface FlexStateMachineContext extends FlexStateTransitionHooks {
     [key: string]: any;
 }
