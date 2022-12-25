@@ -227,7 +227,7 @@ export class FlexStateMachine extends LiteEventEmitter{
     get history() { return this.#history }                                  // 返回状态历史
     get options():Required<FlexStateOptions> & LiteEventEmitterOptions{
         return super.options as Required<FlexStateOptions> & LiteEventEmitterOptions
-    }                                 
+    }                                    
     /**************************** 初始化 *****************************/
     private _addParentStateListener(){
         if(this.parent){
@@ -266,7 +266,9 @@ export class FlexStateMachine extends LiteEventEmitter{
             let addedState:FlexState = this._add(state);          
             // 将状态值映射为实例的属性，可以直接以大写方式访问，如fsm.CONNECTED===state.value  
             if(this.options.injectStateValue){
-                (this.context as any)[name.toUpperCase()] = addedState.value;            
+                (this.context as any)[name.toUpperCase()] = addedState.value;       
+                (this as any)[name.toUpperCase()] = addedState.value;           
+    
             }
             if(addedState.initial) this.#initialState = addedState
             if(addedState.final) this.#finalStates.push(addedState.name)

@@ -42,7 +42,7 @@ describe("状态机",()=>{
         const startCallback = vi.fn();
         fsm.on("start",startCallback)
         expect(fsm.running).toBeFalsy()
-        expect(fsm.current.name).toBe("NULL")
+        expect(fsm.current.name).toBe("IDLE")
         await fsm.start()
         expect(fsm.current.name).toBe("A")
         expect(fsm.running).toBeTruthy()      
@@ -62,7 +62,7 @@ describe("状态机",()=>{
         fsm.on("stop",stopCallback)
         await fsm.waitForInitial() 
         await fsm.stop()
-        expect(fsm.current.name).toBe("NULL")
+        expect(fsm.current.name).toBe("IDLE")
         expect(fsm.running).toBeFalsy()      
         expect(stopCallback.mock.calls.length).toBe(1);
         expect(stopCallback).toHaveBeenCalled();
@@ -75,7 +75,9 @@ describe("状态机",()=>{
             states:{
                 A:{
                     value:1,
-                    enter:()=>{throw e},  // 进入A状态出错,导致不能切换到初始状态
+                    enter:()=>{
+                        throw e
+                    },  // 进入A状态出错,导致不能切换到初始状态
                     initial:true,
                 },                    
                 B:{value:2},
@@ -85,7 +87,7 @@ describe("状态机",()=>{
         const stopCallback = vi.fn();
         fsm.on("stop",stopCallback)        
         await fsm.start()
-        expect(fsm.current.name).toBe("NULL")
+        expect(fsm.current.name).toBe("IDLE")
         expect(fsm.running).toBeFalsy()      
         expect(stopCallback.mock.calls.length).toBe(1);
         expect(stopCallback).toHaveBeenCalled();

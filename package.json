@@ -26,7 +26,7 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "flex-decorators": "^1.0.10",
+    "flex-decorators": "^1.0.11",
     "reflect-metadata": "^0.1.13"
   }
 }
