@@ -2,12 +2,10 @@ import "reflect-metadata";
 import { LiteEventEmitter,LiteEventEmitterOptions } from "flex-decorators/liteEventEmitter"
 import timeoutWrapper from "flex-decorators/wrappers/timeout"
 import { 
-    getClassStaticValue,
-    isPlainObject,
     flexStringArrayArgument, 
-    flexStringArgument,
-    delay
+    flexStringArgument
 } from "./utils"
+import { delay, getClassStaticValue,  isPlainObject} from "flex-tools"
 import { 
     StateMachineError,
     NotRunningError,

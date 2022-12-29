@@ -9,6 +9,7 @@ specifiers:
   '@vitest/ui': ^0.24.3
   babel-jest: ^27.0.1
   flex-decorators: ^1.0.11
+  flex-tools: ^1.0.2
   reflect-metadata: ^0.1.13
   tsup: ^6.3.0
   type-fest: ^2.19.0
@@ -17,6 +18,7 @@ specifiers:
 
 dependencies:
   flex-decorators: 1.0.11
+  flex-tools: 1.0.2
   reflect-metadata: 0.1.13
 
 devDependencies:
@@ -2314,6 +2316,12 @@ packages:
       throttle-debounce: 5.0.0
     dev: false
 
+  /flex-tools/1.0.2:
+    resolution: {integrity: sha512-JyGp3ir9bErax6lUPIWR622ZOU0DuqqFU6tPEMfg6s7IMSbqQf+P82/IkO0Vj+Zo50SO+LZC+qc39pI35wRsew==}
+    dependencies:
+      lodash: 4.17.21
+    dev: false
+
   /foreground-child/2.0.0:
     resolution: {integrity: sha512-dCIq9FpEcyQyXKCkyzmlPTFNgrCzPudOe+mhvJU5zAtlBnGVy2yKxtfsxK2tQBThwq225jcvBjpw1Gr40uzZCA==}
     engines: {node: '>=8.0.0'}
@@ -2689,6 +2697,10 @@ packages:
   /lodash.sortby/4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
     dev: true
+
+  /lodash/4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+    dev: false
 
   /loupe/2.3.4:
     resolution: {integrity: sha512-OvKfgCC2Ndby6aSTREl5aCCPTNIzlDfQZvZxNUrBrihDhL3xcrYegTblhmEiCrg2kKQz4XsFIaemE5BF4ybSaQ==}
