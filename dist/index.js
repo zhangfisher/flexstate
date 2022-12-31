@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { createLiteDecorator, getDecorators } from 'flex-decorators';
-import { LiteEventEmitter } from 'flex-decorators/liteEventEmitter';
-import timeoutWrapper from 'flex-decorators/wrappers/timeout';
+import { FlexEvent, getClassStaticValue, isPlainObject, timeout, delay } from 'flex-tools';
 
 /**
 *        
@@ -36,12 +35,6 @@ var __privateSet = (obj, member, value, setter) => {
   setter ? setter.call(obj, value) : member.set(obj, value);
   return value;
 };
-async function delay(t = 100) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, t);
-  });
-}
-__name(delay, "delay");
 function flexStringArgument(param, ...args) {
   let result = param;
   if (typeof param === "function") {
@@ -61,84 +54,6 @@ function flexStringArrayArgument(param, ...args) {
   return results.map((result) => typeof result === "function" ? result.call(...args) : typeof result == "string" ? result : String(result));
 }
 __name(flexStringArrayArgument, "flexStringArrayArgument");
-function isClass(cls) {
-  let result = false;
-  if (typeof cls === "function" && cls.prototype) {
-    try {
-      cls.arguments && cls.caller;
-    } catch (e) {
-      result = true;
-    }
-  }
-  return result;
-}
-__name(isClass, "isClass");
-function isPlainObject(obj) {
-  if (typeof obj !== "object" || obj === null)
-    return false;
-  var proto = Object.getPrototypeOf(obj);
-  if (proto === null)
-    return true;
-  var baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
-  }
-  return proto === baseProto;
-}
-__name(isPlainObject, "isPlainObject");
-function getClassStaticValue(instanceOrClass, fieldName, options = {}) {
-  const opts = Object.assign({
-    merge: 2,
-    default: null
-  }, options);
-  let proto = isClass(instanceOrClass) ? instanceOrClass : instanceOrClass.constructor;
-  let fieldValue = proto[fieldName];
-  let valueType = isPlainObject(fieldValue) ? 0 : Array.isArray(fieldValue) ? 1 : 2;
-  if (opts.merge === 0 || valueType === 2) {
-    return fieldValue;
-  }
-  const defaultValue = valueType === 0 ? Object.assign({}, opts.default || {}) : opts.default || [];
-  let valueList = [
-    fieldValue
-  ];
-  while (proto) {
-    proto = proto.__proto__;
-    if (proto[fieldName]) {
-      valueList.push(proto[fieldName]);
-    } else {
-      break;
-    }
-  }
-  let mergedResults = fieldValue;
-  if (valueType === 0) {
-    mergedResults = valueList.reduce((result, item) => {
-      if (isPlainObject(item)) {
-        return opts.merge === 1 ? Object.assign({}, defaultValue, item, result) : Object.assign({}, defaultValue, item, result);
-      } else {
-        return result;
-      }
-    }, {});
-  } else {
-    mergedResults = valueList.reduce((result, item) => {
-      if (Array.isArray(item)) {
-        result.push(...item);
-      }
-      return result;
-    }, []);
-  }
-  if (Array.isArray(mergedResults) && opts.merge === 2) {
-    mergedResults = Array.from(new Set(mergedResults));
-    if (isPlainObject(defaultValue)) {
-      mergedResults.forEach((value, index) => {
-        if (isPlainObject(value)) {
-          mergedResults[index] = Object.assign({}, defaultValue, value);
-        }
-      });
-    }
-  }
-  return mergedResults;
-}
-__name(getClassStaticValue, "getClassStaticValue");
 var flexState = createLiteDecorator("flexState");
 var state = flexState;
 
@@ -217,7 +132,7 @@ var LeaveStateEvent = /* @__PURE__ */ __name((name) => `${name}/leave`, "LeaveSt
 var DoneStateEvent = /* @__PURE__ */ __name((name) => `${name}/done`, "DoneStateEvent");
 var ResumeStateEvent = /* @__PURE__ */ __name((name) => `${name}/resume`, "ResumeStateEvent");
 var _initialState, _finalStates, _currentState, _transitioning, _running, _name, _history, _actions, _conflictMethods;
-var _FlexStateMachine = class extends LiteEventEmitter {
+var _FlexStateMachine = class extends FlexEvent {
   constructor(options = {}) {
     super(Object.assign({
       name: "",
@@ -305,6 +220,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
       let addedState = this._add(state2);
       if (this.options.injectStateValue) {
         this.context[name.toUpperCase()] = addedState.value;
+        this[name.toUpperCase()] = addedState.value;
       }
       if (addedState.initial)
         __privateSet(this, _initialState, addedState);
@@ -879,7 +795,7 @@ var _FlexStateMachine = class extends LiteEventEmitter {
     ];
     if (!runOptions.timeout)
       runOptions.timeout = 0;
-    let wrapperFn = timeoutWrapper(hookFn, {
+    let wrapperFn = timeout(hookFn, {
       value: runOptions.timeout
     });
     return (args) => new Promise(async (resolve, reject) => {
@@ -942,5 +858,5 @@ _conflictMethods = new WeakMap();
 __publicField(FlexStateMachine, "states", {});
 __publicField(FlexStateMachine, "actions", {});
 
-export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, FinalStateError, FlexStateEvents, FlexStateMachine, FlexStateTransitionEvents, IDLE_STATE, InvalidStateError, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };
+export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, FinalStateError, FlexStateEvents, FlexStateMachine, FlexStateTransitionEvents, IDLE_STATE, InvalidStateError, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitioningError, flexState, flexStringArgument, flexStringArrayArgument, state };
 //# sourceMappingURL=index.js.map

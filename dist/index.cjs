@@ -4,12 +4,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 require('reflect-metadata');
 var flexDecorators = require('flex-decorators');
-var liteEventEmitter = require('flex-decorators/liteEventEmitter');
-var timeoutWrapper = require('flex-decorators/wrappers/timeout');
-
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-var timeoutWrapper__default = /*#__PURE__*/_interopDefaultLegacy(timeoutWrapper);
+var flexTools = require('flex-tools');
 
 /**
 *        
@@ -44,12 +39,6 @@ var __privateSet = (obj, member, value, setter) => {
   setter ? setter.call(obj, value) : member.set(obj, value);
   return value;
 };
-async function delay(t = 100) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, t);
-  });
-}
-__name(delay, "delay");
 function flexStringArgument(param, ...args) {
   let result = param;
   if (typeof param === "function") {
@@ -69,84 +58,6 @@ function flexStringArrayArgument(param, ...args) {
   return results.map((result) => typeof result === "function" ? result.call(...args) : typeof result == "string" ? result : String(result));
 }
 __name(flexStringArrayArgument, "flexStringArrayArgument");
-function isClass(cls) {
-  let result = false;
-  if (typeof cls === "function" && cls.prototype) {
-    try {
-      cls.arguments && cls.caller;
-    } catch (e) {
-      result = true;
-    }
-  }
-  return result;
-}
-__name(isClass, "isClass");
-function isPlainObject(obj) {
-  if (typeof obj !== "object" || obj === null)
-    return false;
-  var proto = Object.getPrototypeOf(obj);
-  if (proto === null)
-    return true;
-  var baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
-  }
-  return proto === baseProto;
-}
-__name(isPlainObject, "isPlainObject");
-function getClassStaticValue(instanceOrClass, fieldName, options = {}) {
-  const opts = Object.assign({
-    merge: 2,
-    default: null
-  }, options);
-  let proto = isClass(instanceOrClass) ? instanceOrClass : instanceOrClass.constructor;
-  let fieldValue = proto[fieldName];
-  let valueType = isPlainObject(fieldValue) ? 0 : Array.isArray(fieldValue) ? 1 : 2;
-  if (opts.merge === 0 || valueType === 2) {
-    return fieldValue;
-  }
-  const defaultValue = valueType === 0 ? Object.assign({}, opts.default || {}) : opts.default || [];
-  let valueList = [
-    fieldValue
-  ];
-  while (proto) {
-    proto = proto.__proto__;
-    if (proto[fieldName]) {
-      valueList.push(proto[fieldName]);
-    } else {
-      break;
-    }
-  }
-  let mergedResults = fieldValue;
-  if (valueType === 0) {
-    mergedResults = valueList.reduce((result, item) => {
-      if (isPlainObject(item)) {
-        return opts.merge === 1 ? Object.assign({}, defaultValue, item, result) : Object.assign({}, defaultValue, item, result);
-      } else {
-        return result;
-      }
-    }, {});
-  } else {
-    mergedResults = valueList.reduce((result, item) => {
-      if (Array.isArray(item)) {
-        result.push(...item);
-      }
-      return result;
-    }, []);
-  }
-  if (Array.isArray(mergedResults) && opts.merge === 2) {
-    mergedResults = Array.from(new Set(mergedResults));
-    if (isPlainObject(defaultValue)) {
-      mergedResults.forEach((value, index) => {
-        if (isPlainObject(value)) {
-          mergedResults[index] = Object.assign({}, defaultValue, value);
-        }
-      });
-    }
-  }
-  return mergedResults;
-}
-__name(getClassStaticValue, "getClassStaticValue");
 var flexState = flexDecorators.createLiteDecorator("flexState");
 var state = flexState;
 
@@ -225,7 +136,7 @@ var LeaveStateEvent = /* @__PURE__ */ __name((name) => `${name}/leave`, "LeaveSt
 var DoneStateEvent = /* @__PURE__ */ __name((name) => `${name}/done`, "DoneStateEvent");
 var ResumeStateEvent = /* @__PURE__ */ __name((name) => `${name}/resume`, "ResumeStateEvent");
 var _initialState, _finalStates, _currentState, _transitioning, _running, _name, _history, _actions, _conflictMethods;
-var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
+var _FlexStateMachine = class extends flexTools.FlexEvent {
   constructor(options = {}) {
     super(Object.assign({
       name: "",
@@ -304,7 +215,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
     }
   }
   _addStates() {
-    const staticStates = this.parent ? {} : getClassStaticValue(this.context, "states");
+    const staticStates = this.parent ? {} : flexTools.getClassStaticValue(this.context, "states");
     const definedStates = Object.assign({}, staticStates, this.options.states);
     if (Object.keys(definedStates).length == 0)
       throw new StateMachineError("\u672A\u63D0\u4F9B\u72B6\u6001\u673A\u5B9A\u4E49");
@@ -313,6 +224,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
       let addedState = this._add(state2);
       if (this.options.injectStateValue) {
         this.context[name.toUpperCase()] = addedState.value;
+        this[name.toUpperCase()] = addedState.value;
       }
       if (addedState.initial)
         __privateSet(this, _initialState, addedState);
@@ -452,7 +364,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
     if (this.options.injectStateValue) {
       this.context[stateName.toUpperCase()] == finalState.value;
     }
-    if (isPlainObject(finalState.scope) && Object.keys(finalState.scope).length > 0) {
+    if (flexTools.isPlainObject(finalState.scope) && Object.keys(finalState.scope).length > 0) {
       this._createStateScope(finalState, finalState.scope);
     }
     finalState.createScope = (options) => this._createStateScope(finalState, options);
@@ -483,7 +395,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
         if (state2.value === resultState)
           return state2;
       }
-    } else if (isPlainObject(resultState) && resultState.name in this.states) {
+    } else if (flexTools.isPlainObject(resultState) && resultState.name in this.states) {
       return this.states[resultState.name];
     }
     throw new InvalidStateError();
@@ -512,7 +424,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
       return state2 in this.states;
     } else if (typeof state2 === "number") {
       return Object.values(this.states).some((s) => s.value === state2);
-    } else if (isPlainObject(state2)) {
+    } else if (flexTools.isPlainObject(state2)) {
       return Object.values(this.states).some((s) => s.value === state2.value && s.name === state2.name);
     } else {
       return false;
@@ -521,7 +433,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
   isCurrent(state2) {
     if (typeof state2 == "string") {
       return this.current.name === state2;
-    } else if (isPlainObject(state2)) {
+    } else if (flexTools.isPlainObject(state2)) {
       return state2.name === this.current.name;
     } else if (typeof state2 === "function") {
       return state2() === this.current.name;
@@ -542,7 +454,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
   }
   _registerActions() {
     __privateSet(this, _actions, {});
-    this.parent ? {} : getClassStaticValue(this.context, "actions");
+    this.parent ? {} : flexTools.getClassStaticValue(this.context, "actions");
     let decoratedActions = this._getDecoratoredActions();
     let actions = Object.assign({}, decoratedActions, this.options.actions);
     for (let [name, action] of Object.entries(actions)) {
@@ -887,7 +799,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
     ];
     if (!runOptions.timeout)
       runOptions.timeout = 0;
-    let wrapperFn = timeoutWrapper__default["default"](hookFn, {
+    let wrapperFn = flexTools.timeout(hookFn, {
       value: runOptions.timeout
     });
     return (args) => new Promise(async (resolve, reject) => {
@@ -911,7 +823,7 @@ var _FlexStateMachine = class extends liteEventEmitter.LiteEventEmitter {
           args.retryCount++;
         }
         if (callCount > 0 && retryInterval > 0)
-          await delay(retryInterval);
+          await flexTools.delay(retryInterval);
       }
       this.off(exports.FlexStateTransitionEvents.CANCEL, cancel);
       if (hasError)
@@ -963,12 +875,8 @@ exports.SideEffectTransitionError = SideEffectTransitionError;
 exports.StateMachineError = StateMachineError;
 exports.TransitionError = TransitionError;
 exports.TransitioningError = TransitioningError;
-exports.delay = delay;
 exports.flexState = flexState;
 exports.flexStringArgument = flexStringArgument;
 exports.flexStringArrayArgument = flexStringArrayArgument;
-exports.getClassStaticValue = getClassStaticValue;
-exports.isClass = isClass;
-exports.isPlainObject = isPlainObject;
 exports.state = state;
 //# sourceMappingURL=index.cjs.map

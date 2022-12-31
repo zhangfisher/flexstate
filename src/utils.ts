@@ -5,30 +5,7 @@
 
 
 import "reflect-metadata";
-
-/**
- *  延时指定的时间
- * @param t 
- * @returns 
- */
-export async function delay(t:number = 100):Promise<void> {
-    return new Promise((resolve)=>{
-        setTimeout(resolve,t)
-    })
-}
-// /**
-//  *  延时指定的时间，当超时后会抛出TIMEOUT错误
-//  * @param t 
-//  * @returns 
-//  */
-// export function delayRejected(t:number = 100):Promise<Error>{
-//     return new Promise((resolve, reject) => {
-//         setTimeout(() =>{
-//             reject("TIMEOUT")
-//         },t);
-//     })
-// }
-
+ 
 /**
  * 
  * 处理字符串参数

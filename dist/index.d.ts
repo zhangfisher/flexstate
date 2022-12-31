@@ -1,18 +1,12 @@
 import * as flex_decorators_dist_liteDecorator from 'flex-decorators/dist/liteDecorator';
 import { DecoratorOptions } from 'flex-decorators';
-import { LiteEventEmitterOptions, LiteEventEmitter } from 'flex-decorators/liteEventEmitter';
+import { FlexEventOptions, FlexEvent } from 'flex-tools';
 
 /**
  *   工具函数
  
  */
 
-/**
- *  延时指定的时间
- * @param t
- * @returns
- */
-declare function delay(t?: number): Promise<void>;
 /**
  *
  * 处理字符串参数
@@ -30,47 +24,6 @@ declare function delay(t?: number): Promise<void>;
  */
 declare function flexStringArgument(param: any, ...args: any[]): any;
 declare function flexStringArrayArgument(param: any, ...args: any[]): any;
-/**
- * 处理对象参数
- * 1. 当参数是函数时执行并返回结果值
- * 2. 当param不是Object时，如果指定个默认参数，由视
- *
- * flexObjectArgument(1,{value:100,count:1},"value")  == {value:100,count:1}
- * flexObjectArgument({x:1,y:1},{value:100,count:1})  == {x:100,y:1,value:100,count:1}
- *
- *
- * @param {*} param
- * @param  {...any} args
- */
-declare function isClass(cls: any): boolean;
-/**
- * 返回是否原始{}
- * @param obj
- * @returns {boolean}
- */
-declare function isPlainObject(obj: any): boolean;
-/**
- *
- * 获取继承链上指定字段的值
- * 获取类的静态变量值，会沿继承链向上查找，并能自动合并数组和{}值
- *
- * calss A{
- *     static settings={a:1}
- * }
- * calss A1 extends A{
- *     static settings={b:2}
- * }
- *
- * getStaticFieldValue(new A1(),"settings") ==== {a:1,b:2}
- *
- * @param instanceOrClass
- * @param fieldName
- * @param options
- */
-declare function getClassStaticValue(instanceOrClass: object, fieldName: string, options?: {
-    merge?: number;
-    default?: any;
-}): any;
 
 interface FlexStateDecoratorOptions extends DecoratorOptions, Pick<FlexStateAction, 'name' | 'alias' | 'when' | 'pending' | 'resolved' | 'rejected' | 'finally'> {
     [key: string]: any;
@@ -195,7 +148,7 @@ interface FlexStateMachineContext extends FlexStateTransitionHooks {
 /**
  * 状态机构造参数
  */
-interface FlexStateOptions extends FlexStateTransitionHooks, LiteEventEmitterOptions {
+interface FlexStateOptions extends FlexStateTransitionHooks, FlexEventOptions {
     name?: string;
     states?: FlexStateMap;
     parent?: FlexState;
@@ -208,7 +161,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks, LiteEventEmitterOpt
     history?: number;
     scope?: FlexStateMachine;
 }
-declare class FlexStateMachine extends LiteEventEmitter {
+declare class FlexStateMachine extends FlexEvent {
     #private;
     static states: FlexStateMap;
     static actions: FlexStateActionMap;
@@ -229,7 +182,7 @@ declare class FlexStateMachine extends LiteEventEmitter {
     get initial(): Required<NewFlexState>;
     get transitioning(): boolean;
     get history(): [number, string][];
-    get options(): Required<FlexStateOptions> & LiteEventEmitterOptions;
+    get options(): Required<FlexStateOptions> & FlexEventOptions;
     /**************************** 初始化 *****************************/
     private _addParentStateListener;
     /**
@@ -546,12 +499,12 @@ declare class FlexStateMachine extends LiteEventEmitter {
      *
      * @param {*} state   状态名称或状态值
      */
-    waitForState(state: FlexStateArgs): Promise<void>;
+    waitForState(state: FlexStateArgs): Promise<any>;
     /**
      * 等待进入初始状态
      * @returns
      */
-    waitForInitial(): Promise<void>;
+    waitForInitial(): Promise<any>;
 }
 
 declare const IDLE_STATE: IDLE_STATE_TYPE;
@@ -573,4 +526,4 @@ declare const DefaultStateParams: {
     resume: undefined;
 };
 
-export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, ERROR_STATE_TYPE, FinalStateError, FlexState, FlexStateAction, FlexStateActionCallback, FlexStateActionDecoratorOptions, FlexStateActionMap, FlexStateArgs, FlexStateDecoratorOptions, FlexStateEvents, FlexStateMachine, FlexStateMachineContext, FlexStateMap, FlexStateNext, FlexStateOptions, FlexStateTransitionEventArguments, FlexStateTransitionEvents, FlexStateTransitionHook, FlexStateTransitionHookArguments, FlexStateTransitionHookExt, FlexStateTransitionHooks, IDLE_STATE, IDLE_STATE_TYPE, InvalidStateError, NewFlexState, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitionHookTypes, TransitioningError, delay, flexState, flexStringArgument, flexStringArrayArgument, getClassStaticValue, isClass, isPlainObject, state };
+export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, ERROR_STATE_TYPE, FinalStateError, FlexState, FlexStateAction, FlexStateActionCallback, FlexStateActionDecoratorOptions, FlexStateActionMap, FlexStateArgs, FlexStateDecoratorOptions, FlexStateEvents, FlexStateMachine, FlexStateMachineContext, FlexStateMap, FlexStateNext, FlexStateOptions, FlexStateTransitionEventArguments, FlexStateTransitionEvents, FlexStateTransitionHook, FlexStateTransitionHookArguments, FlexStateTransitionHookExt, FlexStateTransitionHooks, IDLE_STATE, IDLE_STATE_TYPE, InvalidStateError, NewFlexState, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitionHookTypes, TransitioningError, flexState, flexStringArgument, flexStringArrayArgument, state };

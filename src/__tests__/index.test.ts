@@ -1,6 +1,6 @@
 import { expect, test,describe, vi,beforeEach } from 'vitest'
 import { FlexStateMachine,state,StateMachineError,FinalStateError } from ".."
-import { delay } from "../utils"
+import { delay } from "flex-tools"
 
 
 class TcpClientStateMachine extends FlexStateMachine {

@@ -26,8 +26,9 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "flex-decorators": "^1.0.11",
-    "flex-tools": "^1.0.2",
+    "flex-decorators": "^1.0.13",
+    "flex-tools": "^1.0.19",
+    "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13"
   }
 }

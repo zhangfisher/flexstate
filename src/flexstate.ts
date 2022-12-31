@@ -1,10 +1,6 @@
 import "reflect-metadata";
-import { LiteEventEmitter,LiteEventEmitterOptions } from "flex-decorators/liteEventEmitter"
-import timeoutWrapper from "flex-decorators/wrappers/timeout"
-import { 
-    flexStringArrayArgument, 
-    flexStringArgument
-} from "./utils"
+import {timeout as timeoutWrapper,FlexEvent,FlexEventOptions} from "flex-tools"
+import {  flexStringArrayArgument, flexStringArgument} from "./utils"
 import { delay, getClassStaticValue,  isPlainObject} from "flex-tools"
 import { 
     StateMachineError,
@@ -158,7 +154,7 @@ export interface FlexStateMachineContext extends FlexStateTransitionHooks{
 /**
  * 状态机构造参数
  */
-export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOptions{
+export interface FlexStateOptions extends FlexStateTransitionHooks,FlexEventOptions{
     name?               : string,                                     // 当前状态机名称
     states?             : FlexStateMap,                           // 状态声明
     parent?            : FlexState,                                  // 父状态实例
@@ -175,7 +171,7 @@ export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmit
 
 
  
-export class FlexStateMachine extends LiteEventEmitter{  
+export class FlexStateMachine extends FlexEvent{  
     static states : FlexStateMap = {  }
     static actions: FlexStateActionMap = {}
     states        : Record<string, FlexState>= {}
@@ -223,8 +219,8 @@ export class FlexStateMachine extends LiteEventEmitter{
     get initial() { return this.#initialState }                             // 返回初始状态
     get transitioning() { return this.#transitioning }                      // 正在转换状态标志
     get history() { return this.#history }                                  // 返回状态历史
-    get options():Required<FlexStateOptions> & LiteEventEmitterOptions{
-        return super.options as Required<FlexStateOptions> & LiteEventEmitterOptions
+    get options():Required<FlexStateOptions> & FlexEventOptions{
+        return super.options as Required<FlexStateOptions> & FlexEventOptions
     }                                    
     /**************************** 初始化 *****************************/
     private _addParentStateListener(){
@@ -625,7 +621,7 @@ export class FlexStateMachine extends LiteEventEmitter{
      *
      */
     private _registerActions() {
-        this.#actions       = {}        
+        this.#actions = {}        
         
         // 如果是子状态则不进行
         const staticActions:{[key:string]:FlexStateAction} = this.parent ? {} : getClassStaticValue(this.context, "actions")
@@ -993,10 +989,10 @@ export class FlexStateMachine extends LiteEventEmitter{
         try{
             // 触发onStateEnter等事件
             eventResults = await this.emitAsync(event, params)
-            if (eventResults.some(r => r as any === false)) {
+            if (eventResults.some((r:any) => r as any === false)) {
                 returnValue = {error:new CancelledTransitionError()}
             } else {
-                let errorIndex = eventResults.findIndex(r => r instanceof Error )
+                let errorIndex = eventResults.findIndex((r:any) => r instanceof Error )
                 if(errorIndex != -1) {
                     returnValue = {error:eventResults[errorIndex]}
                 } 
