@@ -8,8 +8,8 @@ specifiers:
   '@vitest/coverage-c8': ^0.24.3
   '@vitest/ui': ^0.24.3
   babel-jest: ^27.0.1
-  flex-decorators: ^1.0.13
-  flex-tools: ^1.0.19
+  flex-decorators: ^1.0.16
+  flex-tools: ^1.0.20
   lodash: ^4.17.21
   reflect-metadata: ^0.1.13
   tsup: ^6.3.0
@@ -18,8 +18,8 @@ specifiers:
   vitest: ^0.24.3
 
 dependencies:
-  flex-decorators: 1.0.13
-  flex-tools: 1.0.19
+  flex-decorators: 1.0.16
+  flex-tools: 1.0.20
   lodash: 4.17.21
   reflect-metadata: 0.1.13
 
@@ -2311,16 +2311,17 @@ packages:
       path-exists: 4.0.0
     dev: true
 
-  /flex-decorators/1.0.13:
-    resolution: {integrity: sha512-+G97Ge6b7+iwM/S0jXotl9qsKUH52oVaIjyannDPhOjGpOdP6WdO8Cx0McwaTxt9KGrANJSR4JgU18DnMmFFLA==}
+  /flex-decorators/1.0.16:
+    resolution: {integrity: sha512-esMf8l8r/xtp0p8wPaltNtg6BHPEIvYjO+R3Lm9lryuLY1tCT59gn8FA7NGUx4Wb10MFXE1fDwJ06J4TfJXYvQ==}
     dependencies:
-      flex-tools: 1.0.19
+      flex-tools: 1.0.20
+      lodash: 4.17.21
       reflect-metadata: 0.1.13
       throttle-debounce: 5.0.0
     dev: false
 
-  /flex-tools/1.0.19:
-    resolution: {integrity: sha512-3RuTndWZmLpBZMDlXuVFwIWLauu2W1WjhJsorqSLjAbUdTpXtq/XAneFCOKCXZFNKdvQ2hQ3aSRoFJwX9ZqdLg==}
+  /flex-tools/1.0.20:
+    resolution: {integrity: sha512-ZYH0C4aVnIV7tFy0Jr8AmBxvpgqAXqrLfK+bPYt302xZVucMIayOQ/05SETJDjusljJBWkzBOnQBEuP7Clh/Tg==}
     dependencies:
       lodash: 4.17.21
     dev: false

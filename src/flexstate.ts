@@ -1145,7 +1145,7 @@ export class FlexStateMachine extends FlexEvent{
     async waitForState(state:FlexStateArgs){
         const forState = this.getState(state)
         if(this.current.name===forState.name || this.current.value===forState.value) return 
-        return await this.wait(`${forState.name}/done`)        
+        return await this.waitFor(`${forState.name}/done`)        
     }
     /**
      * 等待进入初始状态

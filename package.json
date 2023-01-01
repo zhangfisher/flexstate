@@ -7,7 +7,8 @@
   "module": "./dist/index.js",
   "scripts": {
     "test": "vitest --coverage",
-    "build": "tsup"
+    "build": "tsup",
+    "release":"tsup && npm version patch && npm publish"
   },
   "author": "wxzhang@126.com",
   "license": "ISC",
@@ -26,8 +27,8 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "flex-decorators": "^1.0.13",
-    "flex-tools": "^1.0.19",
+    "flex-decorators": "^1.0.16",
+    "flex-tools": "^1.0.20",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13"
   }
