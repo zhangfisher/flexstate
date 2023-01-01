@@ -1,6 +1,6 @@
 {
   "name": "flexstate",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Flexible, friendly and easy-to-use finite state machine",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
@@ -8,7 +8,7 @@
   "scripts": {
     "test": "vitest --coverage",
     "build": "tsup",
-    "release":"tsup && npm version patch && npm publish"
+    "release":"tsup && npm publish"
   },
   "author": "wxzhang@126.com",
   "license": "ISC",
