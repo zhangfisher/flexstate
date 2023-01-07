@@ -13,6 +13,14 @@
   "author": "wxzhang@126.com",
   "license": "ISC",
   "type": "module",
+  "files":[
+    "src",
+    "dist",    
+    "readme.md",
+    "*.ts",
+    ".gitignore",
+    "*.json"
+  ],
   "devDependencies": {
     "@babel/core": "^7.14.3",
     "@babel/preset-env": "^7.14.2",
