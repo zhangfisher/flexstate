@@ -2,5 +2,4 @@
 /.yalc
 /yarn.lock
 /yalc.lock
-/coverage
-/dist
+/coverage 
