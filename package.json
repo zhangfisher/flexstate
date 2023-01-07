@@ -1,6 +1,6 @@
 {
   "name": "flexstate",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Flexible, friendly and easy-to-use finite state machine",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
@@ -13,9 +13,9 @@
   "author": "wxzhang@126.com",
   "license": "ISC",
   "type": "module",
-  "files":[
+  "files": [
     "src",
-    "dist",    
+    "dist",
     "readme.md",
     "*.ts",
     ".gitignore",
