@@ -8,7 +8,7 @@
   "scripts": {
     "test": "vitest --coverage",
     "build": "tsup",
-    "release":"tsup && npm publish"
+    "release": "tsup && npm version patch && npm publish"
   },
   "author": "wxzhang@126.com",
   "license": "ISC",
@@ -27,8 +27,8 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
-    "flex-decorators": "^1.0.16",
-    "flex-tools": "^1.0.20",
+    "flex-decorators": "^1.0.18",
+    "flex-tools": "^1.0.24",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13"
   }
