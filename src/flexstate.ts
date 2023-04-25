@@ -446,8 +446,8 @@ export class FlexStateMachine extends FlexEvent{
         finalState.createScope = (options:FlexStateOptions)=>this._createStateScope(finalState,options)
 
         // 7. 允许通过states.connected.on("enter",cb)形式订阅该状态的事件
-        finalState.on=(event:string,cb:FlexStateTransitionHook)=>this.on(`${stateName}/${event}`,cb as Function)
-        finalState.off=(event:string,cb:FlexStateTransitionHook)=>this.off(`${stateName}/${event}`,cb as Function) 
+        finalState.on=(event:string,cb:FlexStateTransitionHook)=>this.on(`${stateName}/${event}`,cb as any)
+        finalState.off=(event:string,cb:FlexStateTransitionHook)=>this.off(`${stateName}/${event}`,cb as any) 
         
 
         this.states[stateName] = finalState        
@@ -630,12 +630,12 @@ export class FlexStateMachine extends FlexEvent{
         // decoratedActions={method1:{参数}}
         let decoratedActions = this._getDecoratoredActions()
         // actions ={<动作名称>:{..动作参数...}}
-        let actions = Object.assign({},decoratedActions,this.options.actions)
+        let actions = Object.assign({},decoratedActions,this.options.actions) 
         for (let [name, action] of Object.entries(actions)) {
             try{
                 if(Array.isArray(action)) action = action[0]
-                if(!action.name) action.name = name
-                this.register(action)
+                if(!(action as FlexStateAction).name) (action as FlexStateAction).name = name
+                this.register(action as FlexStateAction)
             }catch(e:any){
                 console.error("注册异步状态机动作{}出错:{}",[name,e.message])
             }
