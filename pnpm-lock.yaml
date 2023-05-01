@@ -2,11 +2,11 @@ lockfileVersion: '6.0'
 
 dependencies:
   flex-decorators:
-    specifier: ^1.0.24
-    version: 1.0.24
+    specifier: ^1.0.28
+    version: 1.0.28
   flex-tools:
-    specifier: ^1.0.79
-    version: 1.0.79
+    specifier: ^1.0.84
+    version: 1.0.84
   reflect-metadata:
     specifier: ^0.1.13
     version: 0.1.13
@@ -2383,16 +2383,16 @@ packages:
       path-exists: 4.0.0
     dev: true
 
-  /flex-decorators@1.0.24:
-    resolution: {integrity: sha512-SFY7/4KGaSDA/wk2oWMr3Jm2euiHeNXlrTYOrUV26wDubx3C29W9saRIc3Et8h42ACqJHXzY8xZvT3n2bh7UjA==}
+  /flex-decorators@1.0.28:
+    resolution: {integrity: sha512-KyKYPsYu5+FwiFZf9nKylX2ps+MeYa3fNlLbBnqhYTZtS91XV3UKcYzQDGMLeCGJJERAmnxSQNURL1fqodmY+A==}
     dependencies:
-      flex-tools: 1.0.79
+      flex-tools: 1.0.84
       reflect-metadata: 0.1.13
       throttle-debounce: 5.0.0
     dev: false
 
-  /flex-tools@1.0.79:
-    resolution: {integrity: sha512-/qALUFAJ1IxVNQUFw7ZZQ1N82KrWzvW+70KSXEbOc54c9ptqmL7p9x8AK7MDYjpmw1ufd2JnJkTvAoCNGBsLPA==}
+  /flex-tools@1.0.84:
+    resolution: {integrity: sha512-W1IMBAiwVzCRNlmTbnQyR/Wv4nBDbPT010Lc55e6P5tx1WnBjfAzSuIpdk+NRyngLHjHYgsqMKXHSeEm9nMn4Q==}
     dependencies:
       fs-extra: 11.1.1
       shelljs: 0.8.5
