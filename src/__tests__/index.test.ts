@@ -943,7 +943,7 @@ describe("错误处理", () => {
                     },
                     // 
                     resume:({from,to,error})=>{
-                        expect(error.message).toBe("aEnterError")
+                        expect(error?.message).toBe("aEnterError")
                         if(resumeCount>0){
                             throw new Error("RESUME_ERROR")
                         }
