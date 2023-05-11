@@ -28,8 +28,8 @@ declare function flexStringArrayArgument(param: any, ...args: any[]): any;
 interface FlexStateDecoratorOptions extends DecoratorOptions, Pick<FlexStateAction, 'name' | 'alias' | 'when' | 'pending' | 'resolved' | 'rejected' | 'finally'> {
     [key: string]: any;
 }
-declare const flexState: flex_decorators_dist_liteDecorator.ListDecoratorCreator<FlexStateDecoratorOptions, any, any>;
-declare const state: flex_decorators_dist_liteDecorator.ListDecoratorCreator<FlexStateDecoratorOptions, any, any>;
+declare const flexState: flex_decorators_dist_liteDecorator.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
+declare const state: flex_decorators_dist_liteDecorator.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
 
 declare class StateMachineError extends Error {
 }
