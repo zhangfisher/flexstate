@@ -5,8 +5,8 @@ dependencies:
     specifier: ^1.0.28
     version: 1.0.28
   flex-tools:
-    specifier: ^1.0.84
-    version: 1.0.84
+    specifier: ^1.0.93
+    version: 1.0.93
   reflect-metadata:
     specifier: ^0.1.13
     version: 0.1.13
@@ -2386,13 +2386,13 @@ packages:
   /flex-decorators@1.0.28:
     resolution: {integrity: sha512-KyKYPsYu5+FwiFZf9nKylX2ps+MeYa3fNlLbBnqhYTZtS91XV3UKcYzQDGMLeCGJJERAmnxSQNURL1fqodmY+A==}
     dependencies:
-      flex-tools: 1.0.84
+      flex-tools: 1.0.93
       reflect-metadata: 0.1.13
       throttle-debounce: 5.0.0
     dev: false
 
-  /flex-tools@1.0.84:
-    resolution: {integrity: sha512-W1IMBAiwVzCRNlmTbnQyR/Wv4nBDbPT010Lc55e6P5tx1WnBjfAzSuIpdk+NRyngLHjHYgsqMKXHSeEm9nMn4Q==}
+  /flex-tools@1.0.93:
+    resolution: {integrity: sha512-is1e8+mkTnCeg+r5JGbEO4B9+fEnD7ADpaaXCq7TIvjUc9dR3TgtWBpUeTBDcAEk2k/1iLQMUnhdbobvhd8QQg==}
     dependencies:
       fs-extra: 11.1.1
       shelljs: 0.8.5

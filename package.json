@@ -1,6 +1,6 @@
 {
   "name": "flexstate",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Flexible, friendly and easy-to-use finite state machine",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "flex-decorators": "^1.0.28",
-    "flex-tools": "^1.0.84",
+    "flex-tools": "^1.0.93",
     "reflect-metadata": "^0.1.13"
   }
 }
