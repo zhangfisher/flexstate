@@ -2,8 +2,3 @@
 * [快速入门](/quick-starts)
 * [指南](/guide) 
 * [API](/api) 
-* **开源推荐**
-    * [VoerkaI18n](https://zhangfisher.github.io/voerka-i18n/)
-    * [Logsets](https://zhangfisher.github.io/logsets/)
-    * [AutoPub](https://zhangfisher.github.io/autppub/)
-    * [FlexDecorators](https://zhangfisher.github.io/flex-decorators/)

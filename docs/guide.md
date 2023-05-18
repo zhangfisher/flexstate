@@ -567,10 +567,10 @@ await fs.transition("Disconnecting")    // 转换失败
 
 状态转换钩子指的是在状态转换其间调用的函数，支持以下类型的拦截钩子。
 
-- **`enter`**：当准备进入某个状态时调用，可以通过`返回false`和`触发错误`来阻止状态转换。
-- **`leave`**：当准备离开某个状态时调用，可以通过`返回false`和`触发错误`来阻止状态转换。
-- **`done`**：当已转换到某个状态时调用，该钩子不处理错误，不能通过`返回false`和`触发错误`来阻止状态转换。
-- **`resume`**：当执行`enter`钩子出错时，会调用上一个状态的`resume`来尝试恢复和消除`leave`产生的副作用。
+- `enter`：当准备进入某个状态时调用，可以通过`返回false`和`触发错误`来阻止状态转换。
+- `leave`：当准备离开某个状态时调用，可以通过`返回false`和`触发错误`来阻止状态转换。
+- `done`：当已转换到某个状态时调用，该钩子不处理错误，不能通过`返回false`和`触发错误`来阻止状态转换。
+- `resume`：当执行`enter`钩子出错时，会调用上一个状态的`resume`来尝试恢复和消除`leave`产生的副作用。
 
 ## 实现原理
 
@@ -993,6 +993,7 @@ fsm.register({
 - 可以为动作函数的执行指定一个`timeout`，当执行超时就会产生错误。
 ## 实例动作方法
 默认情况下，状态机会为每一个动作生成同名的实例方法。
+
 ```typescript
 import { state, FlexStateMachine } from "flexstate"
 class MyStateMachine extends FlexStateMachine{
@@ -1012,7 +1013,7 @@ await fsm.connect()
 await fsm.disconnect()
 fsm.register({
   name:"reconnect",
-  ....
+  //....
 })
 
 await fsm.reconnect(...)

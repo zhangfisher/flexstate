@@ -306,7 +306,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 ## canTransitionTo
 
-转换到指定状态
+判断是否可以从当前状态转换到指定状态
 
 ```typescript
     canTransitionTo(fromState:FlexStateArgs, toState?:FlexStateArgs):boolean 
@@ -331,9 +331,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 执行指定的动作
 
 ```typescript
-    canTransitionTo(fromState:FlexStateArgs, toState?:FlexStateArgs):boolean 
-    canTransitionTo(toState:FlexStateArgs):boolean
-    canTransitionTo():boolean
+    execute(name:string, ...args:any[]):void 
 ```
 
 - **参数**：
@@ -352,7 +350,11 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 ## waitForState
 
 等待状态机进入指定状态
- 
+
+```typescript
+async waitForState(state:FlexStateArgs) 
+``` 
+
 - **参数**：
 
 | 名称 | 类型 |  说明 |
