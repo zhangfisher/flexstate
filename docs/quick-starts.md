@@ -24,7 +24,7 @@
 
 import { state, FlexStateMachine } from "flexstate"
 
-class TcpClient extends FlexStateMachineMachine{
+class TcpClient extends FlexStateMachine{
   // 定义状态
     static states = { 
         Initial : { value:0, title:"已初始化", next:["Connecting","Connected","Disconnected"],initial:true},

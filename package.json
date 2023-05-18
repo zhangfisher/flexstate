@@ -11,7 +11,7 @@
     "release": "tsup && npm version patch && npm publish"
   },
   "author": "wxzhang@126.com",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "files": [
     "src",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "flex-decorators": "^1.0.28",
-    "flex-tools": "^1.0.93",
+    "flex-tools": "^1.0.97",
     "reflect-metadata": "^0.1.13"
   }
 }
