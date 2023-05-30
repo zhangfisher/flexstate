@@ -2,11 +2,11 @@ lockfileVersion: '6.0'
 
 dependencies:
   flex-decorators:
-    specifier: ^1.0.28
-    version: 1.0.28
+    specifier: ^1.0.27
+    version: 1.0.27
   flex-tools:
-    specifier: ^1.1.2
-    version: 1.1.2
+    specifier: ^1.1.8
+    version: 1.1.8
   reflect-metadata:
     specifier: ^0.1.13
     version: 0.1.13
@@ -1554,7 +1554,7 @@ packages:
   /@types/graceful-fs@4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
-      '@types/node': 18.7.18
+      '@types/node': 20.2.5
     dev: true
 
   /@types/istanbul-lib-coverage@2.0.4:
@@ -1576,6 +1576,9 @@ packages:
   /@types/node@18.7.18:
     resolution: {integrity: sha512-m+6nTEOadJZuTPkKR/SYK3A2d7FZrgElol9UP1Kae90VVU4a6mxnPuLiIW1m4Cq4gZ/nWb9GrdVXJCoCazDAbg==}
     dev: true
+
+  /@types/node@20.2.5:
+    resolution: {integrity: sha512-JJulVEQXmiY9Px5axXHeYGLSjhkZEnD+MDPDGbCbIAbMslkKwmygtZFy1X6s/075Yo94sf8GuSlFfPzysQrWZQ==}
 
   /@types/yargs-parser@21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -2383,16 +2386,17 @@ packages:
       path-exists: 4.0.0
     dev: true
 
-  /flex-decorators@1.0.28:
-    resolution: {integrity: sha512-KyKYPsYu5+FwiFZf9nKylX2ps+MeYa3fNlLbBnqhYTZtS91XV3UKcYzQDGMLeCGJJERAmnxSQNURL1fqodmY+A==}
+  /flex-decorators@1.0.27:
+    resolution: {integrity: sha512-yYnX971hkgOdnKSaSE3Svo0HSxZpc8ppvM4n+q8VvnLCfc3p+sGqlwyFp/ufpESSdoNMuPlecWamjBnRmuBPtQ==}
     dependencies:
-      flex-tools: 1.1.2
+      '@types/node': 20.2.5
+      flex-tools: 1.1.8
       reflect-metadata: 0.1.13
       throttle-debounce: 5.0.0
     dev: false
 
-  /flex-tools@1.1.2:
-    resolution: {integrity: sha512-u7/w0EpS20driy6zmPGmPJJuS5D06xgYFUo0kXQtJAej4Uu6D93xyS3KPhthmG9e2LlNBNveSBprgFtlogZzzQ==}
+  /flex-tools@1.1.8:
+    resolution: {integrity: sha512-H8kvYYvEj2yLMYwToyIDLEEl8xqNMLL+eSst/aSrPtGAUoMSnldzhpQy+/d3MXskkt3eXfvJV6CENs7Rmg6r3w==}
     dependencies:
       fs-extra: 11.1.1
       shelljs: 0.8.5
@@ -2817,7 +2821,7 @@ packages:
     dependencies:
       '@jest/types': 27.5.1
       '@types/graceful-fs': 4.1.5
-      '@types/node': 18.7.18
+      '@types/node': 20.2.5
       anymatch: 3.1.2
       fb-watchman: 2.0.1
       graceful-fs: 4.2.10
@@ -2840,7 +2844,7 @@ packages:
     resolution: {integrity: sha512-jZCyo6iIxO1aqUxpuBlwTDMkzOAJS4a3eYz3YzgxxVQFwLeSA7Jfq5cbqCY+JLvTDrWirgusI/0KwxKMgrdf7w==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
-      '@types/node': 18.7.18
+      '@types/node': 20.2.5
       graceful-fs: 4.2.10
     dev: true
 
@@ -2849,7 +2853,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 18.7.18
+      '@types/node': 20.2.5
       chalk: 4.1.2
       ci-info: 3.4.0
       graceful-fs: 4.2.10
@@ -2860,7 +2864,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.7.18
+      '@types/node': 20.2.5
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
