@@ -4,15 +4,19 @@
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
+            "name": "启动程序",
             "type": "node",
             "request": "launch",
-            "name": "启动程序",
-            "skipFiles": [
-                "<node_internals>/**"
+            "args": [
+                "${file}"
             ],
-            "program": "${file}"
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "cwd": "${workspaceRoot}",
+            "internalConsoleOptions": "openOnSessionStart"
         }
     ]
 }

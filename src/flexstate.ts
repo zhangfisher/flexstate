@@ -801,15 +801,19 @@ export class FlexStateMachine extends FlexEvent{
      register(action:FlexStateAction) {
         this._normalizeAction(action)
         if(!action.name) throw new TypeError("需要为动作指定一个名称")
+        // 是否使用外部上下文
+        const useExternalContext = this !== this.context
         // 包装动作函数
         const fn = this._createActionExecutor(action)
         this.#actions[action.name] = fn.bind(this.context)
         // 在实现中为该动作生成一个[action.name]的实例方法
         if(this.options.injectActionMethod) {
             // 如果类上存在与动作名称相同的方法时，需要为动作指定一个别名，否则会给出警告
-            const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name           
-            if(actionName in this.context) {
-                if(!this.#conflictMethods) this.#conflictMethods=[this.context[actionName]]  // 保存冲突方法的引用以备恢复
+            const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name 
+            // 只有当使用了外部上下文时注入冲突方法时才会给出警告          
+            if(useExternalContext && actionName in this.context) {
+                // 保存冲突方法的引用，当执行unregister(action)时可以恢复
+                if(!this.#conflictMethods) this.#conflictMethods=[this.context[actionName]]                  
                 this.#conflictMethods[actionName] = this.context[actionName]
                 console.warn("异步状态机注入的动作在实例上已经存在同名方法")
             }          

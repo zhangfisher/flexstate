@@ -12,7 +12,6 @@
   },
   "author": "wxzhang@126.com",
   "license": "MIT",
-  "type": "module",
   "files": [
     "src",
     "dist",
@@ -28,9 +27,10 @@
     "@vitest/coverage-c8": "^0.24.3",
     "@vitest/ui": "^0.24.3",
     "babel-jest": "^27.0.1",
+    "ts-node": "^10.9.1",
     "tsup": "^6.3.0",
     "type-fest": "^2.19.0",
-    "typescript": "^4.9.4",
+    "typescript": "^5.0.4",
     "vitest": "^0.24.3"
   },
   "dependencies": {
