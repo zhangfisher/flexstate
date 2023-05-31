@@ -1,6 +1,10 @@
-import 'reflect-metadata';
-import { createLiteDecorator, getDecorators } from 'flex-decorators';
-import { FlexEvent, getClassStaticValue, isPlainObject, timeout, delay } from 'flex-tools';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+require('reflect-metadata');
+var flexDecorators = require('flex-decorators');
+var flexTools = require('flex-tools');
 
 /**
 *        
@@ -54,7 +58,7 @@ function flexStringArrayArgument(param, ...args) {
   return results.map((result) => typeof result === "function" ? result.call(...args) : typeof result == "string" ? result : String(result));
 }
 __name(flexStringArrayArgument, "flexStringArrayArgument");
-var flexState = createLiteDecorator("flexState");
+var flexState = flexDecorators.createLiteDecorator("flexState");
 var state = flexState;
 
 // src/errors.ts
@@ -111,28 +115,28 @@ var DefaultStateParams = {
   leave: void 0,
   resume: void 0
 };
-var FlexStateEvents;
+exports.FlexStateEvents = void 0;
 (function(FlexStateEvents2) {
   FlexStateEvents2["START"] = "start";
   FlexStateEvents2["STOP"] = "stop";
   FlexStateEvents2["FINAL"] = "final";
   FlexStateEvents2["ERROR"] = "error";
-})(FlexStateEvents || (FlexStateEvents = {}));
-var FlexStateTransitionEvents;
+})(exports.FlexStateEvents || (exports.FlexStateEvents = {}));
+exports.FlexStateTransitionEvents = void 0;
 (function(FlexStateTransitionEvents2) {
   FlexStateTransitionEvents2["BEGIN"] = "transition/begin";
   FlexStateTransitionEvents2["END"] = "transition/end";
   FlexStateTransitionEvents2["CANCEL"] = "transition/cancel";
   FlexStateTransitionEvents2["ERROR"] = "transition/error";
   FlexStateTransitionEvents2["FINAL"] = "transition/final";
-})(FlexStateTransitionEvents || (FlexStateTransitionEvents = {}));
+})(exports.FlexStateTransitionEvents || (exports.FlexStateTransitionEvents = {}));
 var CANCEL_TRANSITION = "cancelTransition";
 var EnterStateEvent = /* @__PURE__ */ __name((name) => `${name}/enter`, "EnterStateEvent");
 var LeaveStateEvent = /* @__PURE__ */ __name((name) => `${name}/leave`, "LeaveStateEvent");
 var DoneStateEvent = /* @__PURE__ */ __name((name) => `${name}/done`, "DoneStateEvent");
 var ResumeStateEvent = /* @__PURE__ */ __name((name) => `${name}/resume`, "ResumeStateEvent");
 var _initialState, _finalStates, _currentState, _transitioning, _running, _name, _history, _actions, _conflictMethods;
-var _FlexStateMachine = class extends FlexEvent {
+var _FlexStateMachine = class extends flexTools.FlexEvent {
   constructor(options = {}) {
     super(Object.assign({
       name: "",
@@ -211,7 +215,7 @@ var _FlexStateMachine = class extends FlexEvent {
     }
   }
   _addStates() {
-    const staticStates = this.parent ? {} : getClassStaticValue(this.context, "states");
+    const staticStates = this.parent ? {} : flexTools.getClassStaticValue(this.context, "states");
     const definedStates = Object.assign({}, staticStates, this.options.states);
     if (Object.keys(definedStates).length == 0)
       throw new StateMachineError("\u672A\u63D0\u4F9B\u72B6\u6001\u673A\u5B9A\u4E49");
@@ -247,7 +251,7 @@ var _FlexStateMachine = class extends FlexEvent {
     if (__privateGet(this, _running))
       return;
     __privateSet(this, _running, true);
-    this._emitStateMachineEvent(FlexStateEvents.START);
+    this._emitStateMachineEvent(exports.FlexStateEvents.START);
     try {
       return await this.transition(__privateGet(this, _initialState));
     } catch (e) {
@@ -259,7 +263,7 @@ var _FlexStateMachine = class extends FlexEvent {
       this.emit(CANCEL_TRANSITION);
     __privateSet(this, _currentState, IDLE_STATE);
     __privateSet(this, _running, false);
-    this._emitStateMachineEvent(FlexStateEvents.STOP, e);
+    this._emitStateMachineEvent(exports.FlexStateEvents.STOP, e);
   }
   async stop() {
     this._assertRunning();
@@ -273,19 +277,19 @@ var _FlexStateMachine = class extends FlexEvent {
     const context = this.context;
     const eventMap = [
       [
-        FlexStateTransitionEvents.BEGIN,
+        exports.FlexStateTransitionEvents.BEGIN,
         "onTransitionBegin"
       ],
       [
-        FlexStateTransitionEvents.END,
+        exports.FlexStateTransitionEvents.END,
         "onTransitionEnd"
       ],
       [
-        FlexStateTransitionEvents.CANCEL,
+        exports.FlexStateTransitionEvents.CANCEL,
         "onTransitionCancel"
       ],
       [
-        FlexStateTransitionEvents.ERROR,
+        exports.FlexStateTransitionEvents.ERROR,
         "onTransitionError"
       ]
     ];
@@ -296,7 +300,7 @@ var _FlexStateMachine = class extends FlexEvent {
         }
       });
       if (typeof context.onTransition === "function") {
-        Object.values(FlexStateTransitionEvents).forEach((event) => this.on(event, context.onTransition.bind(context)));
+        Object.values(exports.FlexStateTransitionEvents).forEach((event) => this.on(event, context.onTransition.bind(context)));
       }
     }
     eventMap.forEach(([event, method]) => {
@@ -305,7 +309,7 @@ var _FlexStateMachine = class extends FlexEvent {
       }
     });
     if (typeof this.options.onTransition === "function") {
-      Object.values(FlexStateTransitionEvents).forEach((event) => this.on(event, this.options.onTransition.bind(context)));
+      Object.values(exports.FlexStateTransitionEvents).forEach((event) => this.on(event, this.options.onTransition.bind(context)));
     }
   }
   _normalizeState(state2) {
@@ -360,7 +364,7 @@ var _FlexStateMachine = class extends FlexEvent {
     if (this.options.injectStateValue) {
       this.context[stateName.toUpperCase()] == finalState.value;
     }
-    if (isPlainObject(finalState.scope) && Object.keys(finalState.scope).length > 0) {
+    if (flexTools.isPlainObject(finalState.scope) && Object.keys(finalState.scope).length > 0) {
       this._createStateScope(finalState, finalState.scope);
     }
     finalState.createScope = (options) => this._createStateScope(finalState, options);
@@ -391,7 +395,7 @@ var _FlexStateMachine = class extends FlexEvent {
         if (state2.value === resultState)
           return state2;
       }
-    } else if (isPlainObject(resultState) && resultState.name in this.states) {
+    } else if (flexTools.isPlainObject(resultState) && resultState.name in this.states) {
       return this.states[resultState.name];
     }
     throw new InvalidStateError();
@@ -420,7 +424,7 @@ var _FlexStateMachine = class extends FlexEvent {
       return state2 in this.states;
     } else if (typeof state2 === "number") {
       return Object.values(this.states).some((s) => s.value === state2);
-    } else if (isPlainObject(state2)) {
+    } else if (flexTools.isPlainObject(state2)) {
       return Object.values(this.states).some((s) => s.value === state2.value && s.name === state2.name);
     } else {
       return false;
@@ -429,7 +433,7 @@ var _FlexStateMachine = class extends FlexEvent {
   isCurrent(state2) {
     if (typeof state2 == "string") {
       return this.current.name === state2;
-    } else if (isPlainObject(state2)) {
+    } else if (flexTools.isPlainObject(state2)) {
       return state2.name === this.current.name;
     } else if (typeof state2 === "function") {
       return state2() === this.current.name;
@@ -441,7 +445,7 @@ var _FlexStateMachine = class extends FlexEvent {
     return this.current && this.current.final;
   }
   _getDecoratoredActions() {
-    let decoratedActions = getDecorators(this.context, "flexState");
+    let decoratedActions = flexDecorators.getDecorators(this.context, "flexState");
     Object.entries(decoratedActions).forEach(([methodName, [action]]) => {
       action.execute = this.context[methodName];
       decoratedActions[methodName] = action;
@@ -450,7 +454,7 @@ var _FlexStateMachine = class extends FlexEvent {
   }
   _registerActions() {
     __privateSet(this, _actions, {});
-    this.parent ? {} : getClassStaticValue(this.context, "actions");
+    this.parent ? {} : flexTools.getClassStaticValue(this.context, "actions");
     let decoratedActions = this._getDecoratoredActions();
     let actions = Object.assign({}, decoratedActions, this.options.actions);
     for (let [name, action] of Object.entries(actions)) {
@@ -565,11 +569,12 @@ var _FlexStateMachine = class extends FlexEvent {
     this._normalizeAction(action);
     if (!action.name)
       throw new TypeError("\u9700\u8981\u4E3A\u52A8\u4F5C\u6307\u5B9A\u4E00\u4E2A\u540D\u79F0");
+    const useExternalContext = this !== this.context;
     const fn = this._createActionExecutor(action);
     __privateGet(this, _actions)[action.name] = fn.bind(this.context);
     if (this.options.injectActionMethod) {
       const actionName = action.alias && action.alias.length > 0 ? action.alias : action.name;
-      if (actionName in this.context) {
+      if (useExternalContext && actionName in this.context) {
         if (!__privateGet(this, _conflictMethods))
           __privateSet(this, _conflictMethods, [
             this.context[actionName]
@@ -629,13 +634,13 @@ var _FlexStateMachine = class extends FlexEvent {
     };
     try {
       if (!this.canTransitionTo(nextState.name)) {
-        this._safeEmitEvent(FlexStateTransitionEvents.CANCEL, {
+        this._safeEmitEvent(exports.FlexStateTransitionEvents.CANCEL, {
           event: "CANCEL",
           ...transitionInfo
         });
         throw new TransitionError(`\u4E0D\u5141\u8BB8\u4ECE\u72B6\u6001<{${currentState.name}}>\u8F6C\u6362\u5230\u72B6\u6001<{${nextState.name}}>`);
       }
-      this._safeEmitEvent(FlexStateTransitionEvents.BEGIN, {
+      this._safeEmitEvent(exports.FlexStateTransitionEvents.BEGIN, {
         event: "BEGIN",
         ...transitionInfo
       });
@@ -644,7 +649,7 @@ var _FlexStateMachine = class extends FlexEvent {
           ...transitionInfo
         });
         if (leaveResult.error) {
-          this._safeEmitEvent(FlexStateTransitionEvents.ERROR, {
+          this._safeEmitEvent(exports.FlexStateTransitionEvents.ERROR, {
             error: leaveResult.error,
             ...transitionInfo
           });
@@ -661,7 +666,7 @@ var _FlexStateMachine = class extends FlexEvent {
         ...transitionInfo
       });
       if (enterResult.error) {
-        this._safeEmitEvent(FlexStateTransitionEvents.ERROR, {
+        this._safeEmitEvent(exports.FlexStateTransitionEvents.ERROR, {
           event: "ERROR",
           error: enterResult.error,
           ...transitionInfo
@@ -689,7 +694,7 @@ var _FlexStateMachine = class extends FlexEvent {
         isDone = true;
       }
     } catch (e) {
-      this._safeEmitEvent(FlexStateTransitionEvents.ERROR, {
+      this._safeEmitEvent(exports.FlexStateTransitionEvents.ERROR, {
         event: "ERROR",
         error: e,
         ...transitionInfo
@@ -701,13 +706,13 @@ var _FlexStateMachine = class extends FlexEvent {
     if (isDone) {
       this._addHistory(this.current.name);
       this._safeEmitEvent(DoneStateEvent(this.current.name), transitionInfo);
-      this._safeEmitEvent(FlexStateTransitionEvents.END, {
+      this._safeEmitEvent(exports.FlexStateTransitionEvents.END, {
         event: "END",
         timeConsuming: Date.now() - beginTime,
         ...transitionInfo
       });
       if (this.isFinal())
-        this._safeEmitEvent(FlexStateEvents.FINAL);
+        this._safeEmitEvent(exports.FlexStateEvents.FINAL);
     }
     return this;
   }
@@ -795,12 +800,12 @@ var _FlexStateMachine = class extends FlexEvent {
     ];
     if (!runOptions.timeout)
       runOptions.timeout = 0;
-    let wrapperFn = timeout(hookFn, {
+    let wrapperFn = flexTools.timeout(hookFn, {
       value: runOptions.timeout
     });
     return (args) => new Promise(async (resolve, reject) => {
       const cancel = /* @__PURE__ */ __name(() => reject(new CancelledTransitionError()), "cancel");
-      this.once(FlexStateTransitionEvents.CANCEL, cancel);
+      this.once(exports.FlexStateTransitionEvents.CANCEL, cancel);
       let callCount = 1, retryInterval = 0, hasError;
       args.retry = (ms = 0) => {
         retryInterval = ms;
@@ -819,9 +824,9 @@ var _FlexStateMachine = class extends FlexEvent {
           args.retryCount++;
         }
         if (callCount > 0 && retryInterval > 0)
-          await delay(retryInterval);
+          await flexTools.delay(retryInterval);
       }
-      this.off(FlexStateTransitionEvents.CANCEL, cancel);
+      this.off(exports.FlexStateTransitionEvents.CANCEL, cancel);
       if (hasError)
         reject(hasError);
     });
@@ -858,5 +863,21 @@ _conflictMethods = new WeakMap();
 __publicField(FlexStateMachine, "states", {});
 __publicField(FlexStateMachine, "actions", {});
 
-export { CancelledTransitionError, DefaultStateParams, ERROR_STATE, FinalStateError, FlexStateEvents, FlexStateMachine, FlexStateTransitionEvents, IDLE_STATE, InvalidStateError, NotRunningError, ResumeTransitionError, SideEffectTransitionError, StateMachineError, TransitionError, TransitioningError, flexState, flexStringArgument, flexStringArrayArgument, state };
+exports.CancelledTransitionError = CancelledTransitionError;
+exports.DefaultStateParams = DefaultStateParams;
+exports.ERROR_STATE = ERROR_STATE;
+exports.FinalStateError = FinalStateError;
+exports.FlexStateMachine = FlexStateMachine;
+exports.IDLE_STATE = IDLE_STATE;
+exports.InvalidStateError = InvalidStateError;
+exports.NotRunningError = NotRunningError;
+exports.ResumeTransitionError = ResumeTransitionError;
+exports.SideEffectTransitionError = SideEffectTransitionError;
+exports.StateMachineError = StateMachineError;
+exports.TransitionError = TransitionError;
+exports.TransitioningError = TransitioningError;
+exports.flexState = flexState;
+exports.flexStringArgument = flexStringArgument;
+exports.flexStringArrayArgument = flexStringArrayArgument;
+exports.state = state;
 //# sourceMappingURL=index.js.map
