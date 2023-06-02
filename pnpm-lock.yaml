@@ -2,8 +2,8 @@ lockfileVersion: '6.0'
 
 dependencies:
   flex-decorators:
-    specifier: ^1.0.30
-    version: 1.0.30
+    specifier: ^1.0.31
+    version: 1.0.31
   flex-tools:
     specifier: ^1.1.17
     version: 1.1.17
@@ -911,8 +911,8 @@ packages:
       path-exists: 4.0.0
     dev: true
 
-  /flex-decorators@1.0.30:
-    resolution: {integrity: sha512-QlMz3frjV6/Cp5+ute6LHoDJztK2lojM7pWdNmRQ/1CZCpyJYX78OhXMgZ80QWMvN4gFMF66n26n54jEL3fwAg==}
+  /flex-decorators@1.0.31:
+    resolution: {integrity: sha512-WOiITVRdbkWFlvQvONz/nKtZEjkRVR5rU2Dr6IMvBcGCmLenFQedO0lxd9FJ4WuI8yr8LCxIRN1iLhg1aTtFfQ==}
     dependencies:
       '@types/node': 20.2.5
       flex-tools: 1.1.17
