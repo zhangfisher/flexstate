@@ -2,9 +2,9 @@
   "name": "flexstate",
   "version": "1.0.11",
   "description": "Flexible, friendly and easy-to-use finite state machine",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "scripts": {
     "test": "vitest --coverage",
     "build": "tsup",
