@@ -1,4 +1,4 @@
-import * as flex_decorators_dist_liteDecorator from 'flex-decorators/dist/liteDecorator';
+import * as flex_decorators from 'flex-decorators';
 import { DecoratorOptions } from 'flex-decorators';
 import { FlexEventOptions, FlexEvent } from 'flex-tools';
 
@@ -28,8 +28,8 @@ declare function flexStringArrayArgument(param: any, ...args: any[]): any;
 interface FlexStateDecoratorOptions extends DecoratorOptions, Pick<FlexStateAction, 'name' | 'alias' | 'when' | 'pending' | 'resolved' | 'rejected' | 'finally'> {
     [key: string]: any;
 }
-declare const flexState: flex_decorators_dist_liteDecorator.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
-declare const state: flex_decorators_dist_liteDecorator.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
+declare const flexState: flex_decorators.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
+declare const state: flex_decorators.LiteDecoratorCreator<FlexStateDecoratorOptions, any, never>;
 
 declare class StateMachineError extends Error {
 }
@@ -120,14 +120,14 @@ type ERROR_STATE_TYPE = Pick<FlexState, 'name' | 'value' | 'next' | 'final'>;
 declare enum FlexStateEvents {
     START = "start",
     STOP = "stop",
-    FINAL = "final",
+    FINAL = "final",// 当状态机进入FINAL
     ERROR = "error"
 }
 declare enum FlexStateTransitionEvents {
-    BEGIN = "transition/begin",
-    END = "transition/end",
-    CANCEL = "transition/cancel",
-    ERROR = "transition/error",
+    BEGIN = "transition/begin",// 开始转换前
+    END = "transition/end",// 转换结束后
+    CANCEL = "transition/cancel",// 转换被取消：不允许转换时
+    ERROR = "transition/error",// 转换出错，主要状态回调事件执行出错
     FINAL = "transition/final"
 }
 /**
@@ -410,7 +410,7 @@ declare class FlexStateMachine extends FlexEvent {
      *
      * @resturns  如果转换失败，则会触发错误
      */
-    transition(next: FlexStateArgs, params?: {}): Promise<this | undefined>;
+    transition(next: FlexStateArgs, params?: any): Promise<this | undefined>;
     private _addHistory;
     /**
      * 触发事件并忽略事件处理函数的错误

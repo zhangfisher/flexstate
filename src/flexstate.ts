@@ -709,31 +709,32 @@ export class FlexStateMachine extends FlexEvent{
      * @returns 
      */
     private _createActionExecutor(action:FlexStateAction){
+        const self = this
         return async function (this:any,...args:any[]) {       
-            this._assertRunning()           
-            if(this.isFinal()) throw new FinalStateError() 
+            self._assertRunning()           
+            if(self.isFinal()) throw new FinalStateError() 
             let result, oldStateName,finalState,pendingState,hasError:any = false,isPending=false
             try{
-                oldStateName = this.current.name
+                oldStateName = self.current.name
                 // 1. 判断动作执行的前置状态: 仅在当前状态==when指定的状态或者当前状态=null时才允许执行
-                let whenState =flexStringArrayArgument(action.when,this.context,oldStateName)
+                let whenState =flexStringArrayArgument(action.when,self.context,oldStateName)
                 // 如果当前状态是IDLE,则when参数不起作用。IDLE状态可以转换至任意状态
                 if(oldStateName!==IDLE_STATE.name && whenState.length>0 &&  !whenState.includes(oldStateName)){
-                    throw new TransitionError(`动作<${action.name}>只能在状态<${this.current.name}>下才允许执行,当前状态是<${whenState}>`)
+                    throw new TransitionError(`动作<${action.name}>只能在状态<${self.current.name}>下才允许执行,当前状态是<${whenState}>`)
                 }                    
                 // 2. 转换到pending状态: 如果指定了pending，则转换至该状态
-                pendingState = flexStringArgument(action.pending,this.context,result)
-                if(this.isValid(pendingState) && pendingState!==this.current.name){                    
-                    await this.transition(pendingState , ...args)   
+                pendingState = flexStringArgument(action.pending,self.context,result)
+                if(self.isValid(pendingState) && pendingState!==self.current.name){                    
+                    await self.transition(pendingState , ...args)   
                     isPending = true                 
                 }                
                 // 3. 执行动作函数
-                result = await action.execute.apply(this.context,args)                          
+                result = await action.execute.apply(self.context,args)                          
                 // 4. 成功执行后的状态                    
-                finalState = flexStringArgument(action.resolved,this.context,result)
+                finalState = flexStringArgument(action.resolved,self.context,result)
                 
             }catch(e){
-                finalState = flexStringArgument(action.rejected,this.context,e)
+                finalState = flexStringArgument(action.rejected,self.context,e)
                 hasError = e   
                 throw e
             }finally{
@@ -746,11 +747,11 @@ export class FlexStateMachine extends FlexEvent{
                 //  - 如果没有指定rejected参数，并且也指定了pending参数，则回退到pending之前的状态
                 //  - 如果没有指定rejected参数，也没有指定了pending参数，保持当前状态不变
                 // 如果指定了finally，则无论执行成功失败均切换至finally状态
-                finalState = flexStringArgument(action.finally,this.context,hasError || result) || finalState
-                if (this.isValid(finalState)) {
+                finalState = flexStringArgument(action.finally,self.context,hasError || result) || finalState
+                if (self.isValid(finalState)) {
                     try{
                         // 切换到由resolved/rejected/finally三个参数决定的最终目标转换状态
-                        await this.transition(finalState, result)                        
+                        await self.transition(finalState, result)                        
                     }catch(e){
                         // 如果切换失败，则代表了整个执行出错，应该进行状态复原
                         // 比如指定了resolved状态与当前状态是互悖的,就会导致动作执行成功，而无法转换到resolved状态
@@ -764,7 +765,7 @@ export class FlexStateMachine extends FlexEvent{
                         //      由于再次重复执行动作可能是不可接受的，因为动作副作用可能已经产生                        
                         //      因此，调用者应该自行处理副作用                         
                         //      如果配置了启用自动错误状态，则状态机将切换到错误状态
-                        await this._transitionToError({to:finalState.name,error:e})   
+                        await self._transitionToError({to:finalState.name,error:e})   
                     }                    
                 }else{
                     // finalState是由resolved/rejected/finally三个参数决定的最终目标转换状态
@@ -773,7 +774,7 @@ export class FlexStateMachine extends FlexEvent{
                     //   - 如果曾经切换到pending状态并且执行出错，则需要恢复回退到原始状态
                     //   - 如果未指定有效的pending参数或者无法切换至pending状态，保持原始状态不变
                     if(isPending && hasError){
-                        this.#currentState = this.getState(oldStateName)
+                        self.#currentState = self.getState(oldStateName)
                     }
                 }
             }
@@ -875,7 +876,7 @@ export class FlexStateMachine extends FlexEvent{
      * 
      * @resturns  如果转换失败，则会触发错误
      */
-    async transition(next:FlexStateArgs,params={}) {
+    async transition(next:FlexStateArgs,params:any={}) {
         this._assertRunning()   
         // 如果正在转换中，则触发错误，不允许在转换状态中进行再次转换，这会导致状态混乱，因此触发错误
         if (this.transitioning) throw new TransitioningError()     

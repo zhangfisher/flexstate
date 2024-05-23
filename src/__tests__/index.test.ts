@@ -1,6 +1,6 @@
 import { expect, test,describe, vi,beforeEach } from 'vitest'
 import { FlexStateMachine,state,StateMachineError,FinalStateError } from ".."
-import { delay } from "flex-tools"
+import { delay } from "flex-tools/async/delay"
 
 
 class TcpClientStateMachine extends FlexStateMachine {
@@ -93,7 +93,43 @@ describe("状态机",()=>{
         expect(stopCallback).toHaveBeenCalled();
         expect(stopCallback).toHaveBeenCalledWith(e);        
     })
-
+    test("直接实例状态机并指定上下文, 切换状态", async () => {
+        enum STATUS {
+          A = "A",
+          B = "B",
+          C = "C",
+        } 
+        class Context {
+          static states = {
+            [STATUS.A]: { value: 1, initial: true, next: [STATUS.B] },
+            [STATUS.B]: { value: 2, next: STATUS.C },
+            [STATUS.C]: { value: 3, final: true, next: [STATUS.A] },
+          };
+          fsm: FlexStateMachine;
+          constructor() {
+            this.fsm = new FlexStateMachine({
+              context: this,
+            });
+          }
+          @state({
+            when: [STATUS.A],
+            pending: STATUS.B,
+            resolved: STATUS.C,
+          })
+          async load() {
+            await delay(1000)
+          }
+          
+          onTransition() {
+            console.log(`b`);
+          }
+        }
+        const c = new Context();
+        await c.fsm.waitForState(STATUS.A)    
+        expect(c.fsm.current.name).toBe(STATUS.A);
+        await c.load();
+        expect(c.fsm.current.name).toBe(STATUS.C);
+      });
 })
  
 describe("状态转换",()=>{   
