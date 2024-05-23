@@ -160,6 +160,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks, FlexEventOptions {
     injectStateValue?: boolean;
     history?: number;
     scope?: FlexStateMachine;
+    [key: string]: any;
 }
 declare class FlexStateMachine extends FlexEvent {
     #private;

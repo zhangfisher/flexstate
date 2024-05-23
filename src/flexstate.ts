@@ -166,6 +166,7 @@ export interface FlexStateOptions extends FlexStateTransitionHooks,FlexEventOpti
     injectStateValue?  : boolean,                                    // 在实例中注入：大写状态名称的字段，其值 =状态值
     history?           : number                                      // 记录状态转换历史，0=不记录，N=最大记录N条历史
     scope?             : FlexStateMachine,                           // 内部独立子状态域
+    [key:string]       : any
 }  
 
 
@@ -811,12 +812,12 @@ export class FlexStateMachine extends FlexEvent{
         if(this.options.injectActionMethod) {
             // 如果类上存在与动作名称相同的方法时，需要为动作指定一个别名，否则会给出警告
             const actionName:string = (action.alias && action.alias.length>0) ? action.alias : action.name 
-            // 只有当使用了外部上下文时注入冲突方法时才会给出警告          
+            // 只有当使用了外部上下文时并且方法没有使用@state装饰时，注入冲突方法时才会给出警告          
             if(useExternalContext && actionName in this.context) {
                 // 保存冲突方法的引用，当执行unregister(action)时可以恢复
                 if(!this.#conflictMethods) this.#conflictMethods=[this.context[actionName]]                  
                 this.#conflictMethods[actionName] = this.context[actionName]
-                console.warn("异步状态机注入的动作在实例上已经存在同名方法")
+                //console.warn("异步状态机注入的动作在实例上已经存在同名方法:",actionName)
             }          
             // 通过触发事件的方式来动作执行 
             this.context[actionName] = (...args:any[])=>{

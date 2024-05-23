@@ -47,10 +47,10 @@ class TcpClient extends FlexStateMachine{
       },options)) 
     } 
 
-    @state{
+    @state({
         when:["Initial","Disconnected","Error"],   // 代表只能当处于此三种状态时才允许调用连接方法    
         pending:"Connecting",						// 执行后进入正在连接中的状态
-    }
+    })
     connect(){
         this._socket.connect(this.options)    
     } 
