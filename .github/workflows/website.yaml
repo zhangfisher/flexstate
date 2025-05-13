@@ -47,9 +47,7 @@ jobs:
         uses: actions/configure-pages@v3
       # 安装依赖
       - name: Install dependencies
-        run: bun install
-      - name: Copy changelogs
-        run: bun run update:changelog
+        run: bun install 
       - name: Build packages
         run: |
           bun run build
