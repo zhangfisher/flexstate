@@ -4,3 +4,6 @@
 /yalc.lock
 /coverage  
 dist
+/docs/.vitepress/cache
+/docs/.vitepress/dist
+/dist

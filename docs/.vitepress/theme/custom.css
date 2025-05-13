@@ -1,0 +1,35 @@
+/* 自定义样式 */
+:root {
+  --vp-c-brand: #3eaf7c;
+  --vp-c-brand-light: #4abf8a;
+  --vp-c-brand-lighter: #5fcf99;
+  --vp-c-brand-dark: #369a6e;
+  --vp-c-brand-darker: #2e8a60;
+  --vp-code-color: #dd6300;
+}
+
+/* 图片缩放效果 */
+.vp-doc img {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.vp-doc img:hover {
+  transform: scale(1.05);
+}
+
+/* 代码块样式增强 */
+.vp-doc div[class*='language-'] {
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* 首页特性部分样式 */
+.VPFeature {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.VPFeature:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}

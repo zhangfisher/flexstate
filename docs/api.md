@@ -2,7 +2,7 @@
 
 `flexstate`只有一个`FlexStateMachine`类。
 
-# 构造参数
+## 构造参数
 
 ```typescript
 export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOptions{
@@ -21,15 +21,15 @@ export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmit
 
 ```
 
-# 属性
+## 属性
 
-## name
+### name
 
 状态机名称，默认等于当前类名
 
 - **类型**：`string`
 
-## context
+### context
 
 定义状态机的上下文对象，默认等于当前状态机实例。flexstate从`context`读取：
 
@@ -38,22 +38,22 @@ export interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmit
 - 所有状态钩子
 - 所有状态监视事件
 
-## parent
+### parent
 
 返回当前状态机父状态
 - **类型**：`FlexState`
 
-## scope
+### scope
 
 父状态所在的状态机实例
 - **类型**：`FlexStateMachine`
 
-## running
+### running
 
 状态机是否处于运行状态
 - **类型**：`boolean`
 
-## actions
+### actions
 已注册的动作列表
 - **类型**：
 
@@ -75,23 +75,23 @@ export interface FlexStateAction{
 // 动作列表{[name]:<FlexState>}
 export type FlexStateActionMap= Record<string,FlexStateAction>
 ```
-## CURRENT
+### CURRENT
 返回当前状态值
 - **类型**：`number`
 
-## current
+### current
 返回当前状态
 - **类型**：`FlexState`
 
-## initial
+### initial
 返回初始状态
 - **类型**：`FlexState`
 
-## transitioning
+### transitioning
 返回是否正在进行状态lfrq
 - **类型**：`boolean`
 
-## history
+### history
 当配置`options.history`大于零时，返回状态转换历史
 
 - **类型**：`Array<[number,string]>`
@@ -106,7 +106,7 @@ export type FlexStateActionMap= Record<string,FlexStateAction>
 ]`
 ```
 
-## options
+### options
 
 状态机配置参数
 
@@ -129,19 +129,19 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 ```
 
-# 方法
+## 方法
 
-## start
+### start
 启动状态机
 
 
-## stop
+### stop
 停止状态机
 
-## reset
+### reset
 重置状态机
 
-## getState
+### getState
 
 返回状态数据。
 
@@ -168,7 +168,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
     getState({name:"ready",...}) // ==  states.ready
 ```
 
-## add
+### add
 
 注册一个新的状态
 
@@ -182,8 +182,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 无
 
-
-## remove
+### remove
 
 移除存在的状态
 
@@ -197,9 +196,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 无
 
-
-
-## isValid
+### isValid
 
 返回输入参数是否是有效的状态
 
@@ -213,7 +210,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 `boolean`
 
-## isCurrent
+### isCurrent
 
 返回输入参数是否是当前状态
 
@@ -228,7 +225,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 `boolean`
 
 
-## isFinal
+### isFinal
 
 返回是否处于最终状态
 
@@ -241,7 +238,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 `boolean`
 
 
-## register
+### register
 
 注册状态动作
 
@@ -257,7 +254,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 
 
-## unregister
+### unregister
 
 注销状态动作
 
@@ -273,7 +270,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 
 
-## cancel
+### cancel
 
 停止正在执行的状态转换，执行后会触发`transition/cancel`事件，并且正在执行的钩子函数时会触发`CancelledTransitionError`
 
@@ -288,7 +285,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 无
 
 
-## transition
+### transition
 
 转换到指定状态
 
@@ -304,7 +301,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 无
 
 
-## canTransitionTo
+### canTransitionTo
 
 判断是否可以从当前状态转换到指定状态
 
@@ -326,7 +323,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 是否转换成功
 `boolean`
 
-## execute
+### execute
 
 执行指定的动作
 
@@ -347,7 +344,7 @@ interface FlexStateOptions extends FlexStateTransitionHooks,LiteEventEmitterOpti
 
 
 
-## waitForState
+### waitForState
 
 等待状态机进入指定状态
 
@@ -366,7 +363,7 @@ async waitForState(state:FlexStateArgs)
 `Promise`
 
 
-## waitForInitial
+### waitForInitial
 
 等待进入初始状态
  
@@ -377,187 +374,3 @@ async waitForState(state:FlexStateArgs)
 - **返回类型**： 
 
 `Promise`
-
-
-
-# 事件
-
-
-# 类型
-
-## FlexStateActionCallback
-
-> type FlexStateActionCallback = 'pending' | 'resolved' | 'rejected' | 'finally' 
-
-## FlexStateAction
-
-```typescript
-export interface FlexStateAction{
-    name?         :string,                                      //指定唯一的动作名称
-    alias?        : string,  									// 动作别名，当在实例中注入同名的方法时，如果指定别名，则使用该别名
-    injectMethod? : boolean,                                    // 是否上下文对象中注入同名的方法
-    // 指定该动作仅在当前状态是when中的一个时才允许执行动作
-    when?         : string | Array<string> | ((params:Object,current:FlexState)=>Array<string>),       		                
-    pending?      : string | Function,                			// 开始执行动作前切换到pending状态
-    resolved?     : string | Function,                			// 执行成功后切换到resolved状态
-    rejected?     : string | Function,                			// 执行失败后切换到rejected状态
-    finally?      : string | ((params:Object)=>Array<string>)   // 无论执行成功或失败均切换到finally状态
-    execute(...args:any[]):void                                 // 动作执行函数，具体干活的
-    [key:string]:any
-} 
-```
-
-## FlexStateActionMap
-
-```typescript
-// 动作列表{[name]:<FlexState>}
-export type FlexStateActionMap= Record<string,FlexStateAction>
-```
-## FlexStateActionDecoratorOptions
-
-状态动作装饰器参数
-
-```typescript
-export type FlexStateActionDecoratorOptions = Omit<FlexStateAction,"name" | "execute">
-```
-## FlexStateTransitionEventArguments
- 状态转换监视事件参数
- 
-```typescript
-export interface FlexStateTransitionEventArguments{
-    event? : 'CANCEL' | 'BEGIN' | 'END' | 'ERROR'
-    from  : string
-    to    : string
-    error?: Error 
-    params?:any
-    [key: string]:any
-}
-```
-## FlexStateTransitionHookArguments
-
-钩子参数 {from,to,error,params,retry,retryCount}
-
-```typescript
-export type FlexStateTransitionHookArguments = Exclude<FlexStateTransitionEventArguments,'event'> & {
-    retryCount    : number                                                  // 重试次数,
-    retry         : Function | ((interval?:number)=>void)                   // 马上执行重试
-}
-```
-
-## FlexStateTransitionHook
-状态转换钩子函数签名
-
-```typescript
-export type FlexStateTransitionHook = ((args:FlexStateTransitionHookArguments)=>Awaited<Promise<any>> | void ) | undefined  
-```
-
-## FlexStateTransitionHookExt
-
-```typescript
-export type FlexStateTransitionHookExt = FlexStateTransitionHook | [FlexStateTransitionHook,{timeout:number}]
-```
-
-## FlexStateNext
-
-```typescript
-export type FlexStateNext = string | Array<string> | (()=> Array<string> ) 
-```
-
-## NewFlexState
-
-```typescript
-export interface NewFlexState{
-    name?   : string,                                               // 状态名称,一般为英文
-    value   : number | null,                                        // <必须，状态值，Number类型>,
-    alias?  : string | undefined,                                   // 可选，状态别名                                 
-    title?  : string,                                               //<状态标题，一般用于显示> 
-    initial?: boolean,                                              // <true/false,是否是初始化状态,只能有一个状态为初始状态>, 
-    final?  : boolean,                                              // <true/false,最终状态>,                                                     
-    enter?  : FlexStateTransitionHookExt,                           // 当进入该状态时的钩子
-    leave?  : FlexStateTransitionHookExt,                           // 当离开该状态时的钩子
-    done?   : FlexStateTransitionHookExt,			                // 当已切换至状态后
-    resume? : FlexStateTransitionHookExt,                           // 当离开后再次恢复时调用
-    next?   : FlexStateNext                                         // 定义该状态的下一个状态只能是哪些状态,也可以是返回下一个状态列表的函数,*代表可以转换到任意状态
-    [key    : string]:any                                           // 额外的参数
-}
-```
-## FlexState
-
-状态声明
-
-```typescript
-export type FlexState = Required<NewFlexState> 
-```
-## FlexStateArgs
-状态参数，用来传状态参数时允许只传递状态名称或{}
-
-```typescript
-export type FlexStateArgs = string | number | FlexState   
-```
-## FlexStateMap
-
-```typescript
-export type FlexStateMap = Record<string,NewFlexState> 
-```
-## NULL_STATE_TYPE
-
-```typescript
-export type NULL_STATE_TYPE = Pick<FlexState,'name' | 'value' | 'next' >
-```
-
-## ERROR_STATE_TYPE
-
-```typescript
-export type ERROR_STATE_TYPE = Pick<FlexState,'name' | 'value' | 'next' | 'final' >
-```
-
-
-## FlexStateEvents
- 状态机事件 
-
-```typescript
-export enum FlexStateEvents {
-    START = "start",
-    STOP  = "stop",
-    FINAL = "final",                         // 当状态机进入FINAL
-    ERROR = "error"                          // 发生状态机运行错误时
-}
-```
-## FlexStateTransitionEvents
-转换事件
-
-```typescript
-export enum FlexStateTransitionEvents{
-    BEGIN  = "transition/begin",                     // 开始转换前
-    END    = "transition/end",                       // 转换结束后
-    CANCEL = "transition/cancel",                    // 转换被取消：不允许转换时
-    ERROR  = "transition/error",                     // 转换出错，主要状态回调事件执行出错
-    FINAL  = "transition/final",                     // 转换到最终状态时
-}
-```
-
-## FlexStateTransitionHooks
-状态机转换钩子回调 
-
-```typescript
-export interface FlexStateTransitionHooks{
-    onTransition?(params:FlexStateTransitionEventArguments):void;    
-    onTransition?(params:FlexStateTransitionEventArguments):Awaited<Promise<any>>;
-    onTransitionBegin?(params:FlexStateTransitionEventArguments):Awaited<Promise<any>>;
-    onTransitionEnd?(params:FlexStateTransitionEventArguments):Awaited<Promise<any>>;
-    onTransitionError?(params:FlexStateTransitionEventArguments):Awaited<Promise<any>>;
-    onTransitionCancel?(params:FlexStateTransitionEventArguments):Awaited<Promise<any>>;
-}
-```
-
-## TransitionHookTypes
-
-```typescript
-export type TransitionHookTypes = keyof FlexStateTransitionHooks
-```
-## FlexStateMachineContext
-```typescript
-export interface FlexStateMachineContext extends FlexStateTransitionHooks{    
-    [key: string]:any
-}
-```

@@ -1,3 +1,7 @@
+---
+title: 快速入门
+---
+
 # 快速入门
 下面我们以开发基于`nodejs/net.socket`的TCP客户端为例来说明`FlexStateMachine`的使用。
 
@@ -14,14 +18,13 @@
 
 **`TCPClient`的状态图如下：**
 
-![](./images/tcpclient_states.png)
+![](../images/tcpclient_states.png)
 
-# 第一步：构建状态机
+## 第一步：构建状态机
 
 推荐直接继承`FlexStateMachine`来创建一个`TCPClient`实例，该种方式更加简单易用。
 
 ```typescript
-
 import { state, FlexStateMachine } from "flexstate"
 
 class TcpClient extends FlexStateMachine{
@@ -76,7 +79,7 @@ class TcpClient extends FlexStateMachine{
 - 定义了`connect`和`disconnect`两个动作`action`，在这两个方法前添加`@state`代表了当执行这两个方法会导致状态变化。
 
 
-# 第二步：初始化TCPSocket
+## 第二步：初始化TCPSocket
 
 当实例化`TCPClient`实例后，首先应该创建Socket实例。由于`TCPClient`实例继承自`FlexStateMachine`，并且我们指定了`Initial`为初始化状态。
 状态机会在实例化并启动后自动转换到`Initial`状态。因此，我们可以在进入`Initial`状态前进行初始化操作。
@@ -106,7 +109,6 @@ class TcpClient extends FlexStateMachine{
         }      
     }
 }
-
 ```
 
 当`TCPClient`实例化，状态机处于`IDLE`状态(`<tcp实例>.current.name=='IDLE'`),然后状态机自动启动(`autoStart=true`)将转换至`Initial`状态（`initial`状态）。
@@ -118,7 +120,7 @@ class TcpClient extends FlexStateMachine{
    - 反复重试多次失败后，也可能会放弃重试，`TCP Client`将无法切换到`Initial`状态，而是保持在`IDLE`状态。
    - 当条件具备时，状态机需要重新运行（即调用`tcp.start()`来启动状态机），将重复上述过程。
    
-# 第三步：连接服务器
+## 第三步：连接服务器
 
 当`TCPClient`实例初始化完成后，就可以开始连接服务器。我们可以在类上创建状态机动作`connect`,启动连接操作。
 
@@ -160,7 +162,7 @@ tcp.connect()
 
 - 至此，实现了当`tcp.connect`方法，状态转换到`Connecting`状态，**连接成功**转换至`Connected`状态，**连接被断开**转换至`Disconnected`状态，**出现错误**时转换到`ERROR`状态。并且在出错时会进行一定重试操作，更多关于重试的内容详见后续介绍。
 
-# 第四步：侦听连接状态 
+## 第四步：侦听连接状态 
 
 在TCP连接生命周期内，状态机会在最后`Initial/Connecting/Connected/Disconnecting/Disconnected/AlwaysDisconnected`状态之间进行转换，我们希望可能侦听状态机的状态转换事件，以便在连接发生状态转换时进行一些操作，此时就可以侦听各种连接事件。
 
@@ -182,7 +184,6 @@ tcp.on("Connected/leave",({from,to})=>{
 tcp.on("Connected/done",({from,to})=>{
     // 当切换至连接状态后触发此事件
 })   
-
 ```
 
 - **在类中也可以直接定义`on<状态名>Enter`、`on<状态名>`、`on<状态名>Done`、`on<状态名>Leave`类方法来侦听事件。**
@@ -211,7 +212,7 @@ class TcpClient extends FlexStateMachine{
 }
 ```
 
-# 第五步：断开重新连接
+## 第五步：断开重新连接
 
 连接管理中的断开重连是非常重要的功能，要处理此逻辑，首先分析一下什么情况下会断开连接。
 
@@ -274,13 +275,13 @@ class TcpClient extends FlexStateMachine{
 }
 ```
 
-# 第六步：连接认证子状态
+## 第六步：连接认证子状态
 
 当tcp连接成功后，一般服务器会要求对客户连接进行认证才允许进行使用，而认证操作（`login/logout`）是一个耗时的异步操作，同样需要进行状态管理。当进入`Connected`状态后，状态将在`未认证`、`正在认证`、`已认证`三个状态间进行转换，并且在连接断开或者出错时马上退出这三个状态。因此，就有必要引入子状态的概念。
 
 引入子状态后，对应的状态图更新如下：
 
-![](./images/tcpstates.png)
+![](../images/tcpstates.png)
 
 
 ```typescript

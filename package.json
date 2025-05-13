@@ -10,7 +10,11 @@
   "scripts": {
     "test": "vitest --coverage",
     "build": "tsup",
-    "release": "tsup && npm version patch && npm publish"
+    "changeset": "changeset",
+    "release": "bun run build && bun run changeset version && cpx CHANGELOG.md docs/intro/ && bun run changeset publish",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "author": "wxzhang@126.com",
   "license": "MIT",
@@ -19,18 +23,21 @@
     "readme.md"
   ],
   "devDependencies": {
+    "@changesets/cli": "^2.29.4",
     "@swc/core": "^1.3.9",
     "@vitest/coverage-c8": "^0.24.3",
     "@vitest/ui": "^0.24.3",
+    "cpx": "^1.5.0",
     "ts-node": "^10.9.1",
     "tsup": "^6.3.0",
     "type-fest": "^2.19.0",
-    "typescript": "^5.4.5",
-    "vitest": "^0.24.3"
+    "typescript": "^5.8.3",
+    "vitepress": "^1.6.3",
+    "vitest": "^0.24.5"
   },
   "dependencies": {
     "flex-decorators": "^1.0.37",
-    "flex-tools": "^1.3.71",
+    "flex-tools": "^1.5.0",
     "reflect-metadata": "^0.2.2"
   }
 }
